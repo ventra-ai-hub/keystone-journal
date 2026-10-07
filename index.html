@@ -439,6 +439,7 @@ textarea.in { height: 84px; padding: 10px 12px; resize: vertical; line-height: 1
 .mh { padding: 0 4px 2px; font: 500 11.5px var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); }
 .cd { position: relative; display: grid; align-content: start; gap: 5px; min-width: 0; min-height: 94px; padding: 8px 9px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--glass-hi) 55%, transparent); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 button.cd:hover { border-color: var(--ink3); }
+.row[data-act="noop"], .ball[data-act="noop"] { cursor: default; }
 .cd.blank { visibility: hidden; }
 .cd.closed { border-style: dashed; background: transparent; opacity: .45; cursor: default; }
 .cd.future { background: transparent; opacity: .4; cursor: default; }
@@ -469,6 +470,11 @@ button.cd:hover { border-color: var(--ink3); }
   .cd-v { max-width: 100%; font-size: 11px; }
   .cd-b, .cd-m { display: none; }
 }
+
+/* Live / Backtest switch */
+.seg { display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid var(--edge); background: var(--glass); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); box-shadow: inset 0 1px 0 var(--edge); }
+.seg button { height: 32px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink2); font: 500 14px var(--font); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
 
 /* how-to guide, sync sheet, notices */
 .guide { list-style: none; counter-reset: g; display: grid; gap: 14px; margin: 14px 0 0; padding: 0; }
@@ -542,7 +548,7 @@ button.cd:hover { border-color: var(--ink3); }
   };
 
   const S = {
-    trades: [], backtest: null, db: null, assets: null, downloads: null, writable: true, loaded: false, live: "connecting",
+    trades: [], bt: [], view: store.get("kj-view", "live") === "backtest" ? "backtest" : "live", backtest: null, db: null, assets: null, downloads: null, writable: true, loaded: false, live: "connecting",
     route: "overview", filter: "all", countMissed: store.get("kj-missed", false) === true,
     maxRisk: Number(store.get("kj-maxrisk", 1000)) > 0 ? Number(store.get("kj-maxrisk", 1000)) : 1000, size: { stop: "" },
     modal: null, draft: null, toast: null, riseUntil: 0, riseT: null, tips: new Map(), unsub: [], lastD: null, tipFor: null,
@@ -755,7 +761,7 @@ button.cd:hover { border-color: var(--ink3); }
     const now = new Date().toISOString();
     if (data) { L.st.docs[path] = { ...data, _t: now }; delete L.st.dead[path]; }
     else { delete L.st.docs[path]; L.st.dead[path] = now; }
-    localSave(); localEmit(); schedulePush();
+    if (!L.quiet) { localSave(); localEmit(); schedulePush(); }
   }
   function localDb() {
     const snap = (path) => { const d = L.st.docs[path]; return { id: path.split("/").pop(), exists: !!d, data: () => (d ? { ...d } : undefined), metadata: { fromCache: true, hasPendingWrites: false } }; };
@@ -774,7 +780,7 @@ button.cd:hover { border-color: var(--ink3); }
         path,
         doc: (id) => ref(path + "/" + (id || "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7))),
         onSnapshot: (next) => {
-          const fn = () => next({ docs: tradeEntries().filter(([p]) => p.startsWith(path + "/")).map(([p]) => snap(p)) });
+          const fn = () => next({ docs: Object.keys(L.st.docs).filter((p) => p.startsWith(path + "/")).map(snap) });
           L.subs.add(fn); fn();
           return () => L.subs.delete(fn);
         },
@@ -844,7 +850,7 @@ button.cd:hover { border-color: var(--ink3); }
     }
     return out;
   }
-  const SYNCED = /^(trades|config)\//;
+  const SYNCED = /^(trades|config|bt)\//;
   const stamp = (s) => JSON.stringify([Object.keys(s.docs).sort().map((p) => p + "@" + (s.docs[p]._t || s.docs[p].updatedAt || "")), Object.keys(s.dead || {}).sort().map((p) => p + "@" + s.dead[p])]);
   const payload = () => JSON.stringify({ app: "keystone-journal", v: 1, savedAt: new Date().toISOString(), docs: Object.fromEntries(Object.entries(L.st.docs).filter(([p]) => SYNCED.test(p))), dead: L.st.dead });
   async function gh(path, opts) {
@@ -925,6 +931,7 @@ button.cd:hover { border-color: var(--ink3); }
     if (!S.downloads) return;
     const docs = {};
     for (const t of S.trades) { const { id, ...rest } = t; docs["trades/" + id] = rest; }
+    for (const t of S.bt) { const { id, ...rest } = t; docs["bt/" + id] = rest; }
     if (S.backtest && S.backtest.plan) docs["config/backtest"] = S.backtest;
     const data = JSON.stringify({ app: "keystone-journal", v: 1, savedAt: new Date().toISOString(), docs }, null, 1);
     try { await S.downloads.save({ filename: `keystone-journal-backup-${new Date().toISOString().slice(0, 10)}.json`, data }); }
@@ -961,7 +968,7 @@ button.cd:hover { border-color: var(--ink3); }
   }
   async function importFile(file) {
     if (!S.db || !S.writable) { toast("This view can't save trades."); return; }
-    let list, bt = null;
+    let list, bt = null, btList = [];
     try {
       const text = await file.text();
       if (text.trim().startsWith("{")) {
@@ -969,10 +976,12 @@ button.cd:hover { border-color: var(--ink3); }
         if (o.plan && o.setups) bt = o;                                   // just the backtest numbers
         else if (o.docs && o.docs["config/backtest"] && o.docs["config/backtest"].plan) bt = o.docs["config/backtest"];
         list = o.docs ? Object.entries(o.docs).filter(([p]) => p.startsWith("trades/")).map(([p, d]) => ({ ...d, id: p.slice(7) })) : Array.isArray(o.trades) ? o.trades : [];
+        btList = o.docs ? Object.entries(o.docs).filter(([p]) => p.startsWith("bt/")).map(([p, d]) => ({ ...d, id: p.slice(3) })) : [];
       } else list = parseCsv(text);
     } catch (e) { toast("That file couldn't be read. Pick a backup from this journal or its CSV export."); return; }
     if (bt) { const { _t, ...clean } = bt; try { await S.db.doc("config/backtest").set(clean); } catch (e) { bt = null; } }
     let added = 0, had = 0, skipped = 0;
+    if (APP) L.quiet = true;
     for (const o of list) {
       const t = cleanTrade(o);
       if (!t) { skipped++; continue; }
@@ -985,14 +994,23 @@ button.cd:hover { border-color: var(--ink3); }
       if (!t.sig) t.sig = ref.id;
       try { await ref.set(t); added++; } catch (e) { skipped++; }
     }
-    toast(`Imported ${plural(added, "trade")}${bt ? " and the backtest numbers" : ""}${had ? ` · ${had} already here` : ""}${skipped ? ` · ${skipped} skipped` : ""}`);
+    let btAdded = 0;
+    for (const o of btList) {
+      const t = cleanTrade(o), id = String(o.id || "");
+      if (!t || !/^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(id) || S.bt.some((x) => x.id === id)) continue;
+      t.sig = o.sig || id;
+      try { await S.db.collection("bt").doc(id).set(t); btAdded++; } catch (e) {}
+    }
+    if (APP) { L.quiet = false; localSave(); localEmit(); schedulePush(); }
+    toast(`Imported ${plural(added, "trade")}${btAdded ? `, ${btAdded} backtest trades` : ""}${bt ? " and the backtest numbers" : ""}${had ? ` · ${had} already here` : ""}${skipped ? ` · ${skipped} skipped` : ""}`);
   }
 
   // ---------- everything the pages show ----------
   function derive() {
     const bt = S.backtest || {};
     const p0 = bt.plan && isNum(bt.plan.winRate) ? bt.plan.winRate : null;
-    const all = S.trades.slice().sort(order);
+    const BT = S.view === "backtest";
+    const all = (BT ? S.bt : S.trades).slice().sort(order);
     const taken = all.filter(isTaken);
 
     // one signal per trade the indicator showed: the same trade on two accounts counts once
@@ -1056,7 +1074,8 @@ button.cd:hover { border-color: var(--ink3); }
     const range20 = p0 != null ? binomRange(20, p0) : null;
 
     // the last 14 NY evenings
-    const end = eveningDate();
+    // the backtest ends on its last evening; live runs to the latest NY evening
+    const end = BT && all.length ? all[all.length - 1].date : eveningDate();
     const days = [];
     for (let i = 13; i >= 0; i--) {
       const ds = addDays(end, -i);
@@ -1067,7 +1086,7 @@ button.cd:hover { border-color: var(--ink3); }
       const usdV = usdOk ? k.reduce((a, y) => a + usdOf(y.t, y.pts), 0) : null;
       const v = usdOk ? usdV : pts;
       const w = list.filter((y) => y.res === 1).length, l = list.filter((y) => y.res === -1).length;
-      days.push({ ds, n: list.length, known: k.length, w, l, pts, usd: usdV, today: i === 0, closed: closedNight(ds),
+      days.push({ ds, n: list.length, known: k.length, w, l, pts, usd: usdV, today: i === 0 && !BT, closed: closedNight(ds),
         cls: !list.length ? (closedNight(ds) ? "closed" : "none") : !k.length ? (w > l ? "pos" : l > w ? "neg" : "flat") : v > 0 ? "pos" : v < 0 ? "neg" : "flat" });
     }
 
@@ -1088,7 +1107,7 @@ button.cd:hover { border-color: var(--ink3); }
     if (firstDate) { const span = (dUTC(end) - dUTC(firstDate)) / 864e5 + 1; if (span >= 7) perWeek = plan.length / (span / 7); }
 
     return { bt, p0, all, taken, signals, plan, T, wr, yours, run, bestWin, worstRun, planRun, onPlanN, usdMode, net, nKnown: known.length,
-      changed, cmp, chgCost, eq, blocks, cur, range20, days, live, perWeek };
+      changed, cmp, chgCost, eq, blocks, cur, range20, days, live, perWeek, BT, end };
   }
 
   // ---------- tooltips (text only, never HTML from the data) ----------
@@ -1152,7 +1171,9 @@ button.cd:hover { border-color: var(--ink3); }
     const now = Date.now();
     el.innerHTML = `<span>NY <b>${fTime(now, NY)}</b></span><span class="hb">Hobart <b>${fTime(now, HOB)}</b></span>`;
   }
-  const pageHead = (eyebrow, h1, lede, extra) => `<section class="head" style="--i:0"><div class="eyebrow">${eyebrow}</div><h1>${h1}</h1><p class="lede">${lede}</p>${extra ? `<div class="head-actions">${extra}</div>` : ""}</section>`;
+  const viewSwitch = () => (S.bt.length ? `<div class="seg" role="group" aria-label="Which trades">${[["live", "Live"], ["backtest", "Backtest"]].map(([k, l]) => `<button type="button" data-act="view" data-v="${k}" data-k="view:${k}" aria-pressed="${S.view === k}">${l}</button>`).join("")}</div>` : "");
+  const pageHead = (eyebrow, h1, lede, extra) => { const x = viewSwitch() + (extra || ""); return `<section class="head" style="--i:0"><div class="eyebrow">${eyebrow}</div><h1>${h1}</h1><p class="lede">${lede}</p>${x ? `<div class="head-actions">${x}</div>` : ""}</section>`; };
+  const btWhat = () => { const b = S.backtest || {}; return `Backtest ${b.version || ""}${b.window ? " · " + b.window : ""} · 1 GC a trade`.replace(/\s+·/g, " ·"); };
   const tile = (i, label, value, sub, mod) => `<div class="tile card rz${mod ? " " + mod : ""}" style="--i:${i}"><div class="t-lbl">${label}${mod === "alert" ? '<i class="adot"></i>' : ""}</div><div class="t-num">${dm(value, 34)}</div><div class="t-sub">${sub}</div></div>`;
 
   function tiles(d) {
@@ -1179,7 +1200,7 @@ button.cd:hover { border-color: var(--ink3); }
     ];
     if (isChanged(t)) lines.push(`Changed: ${(t.changes || []).map((c) => CHG[c] || c).join(", ") || "something"}${isNum(planPts(t)) ? ` · as shown ${fPts(planPts(t))}` : ""}`);
     if (t.account) lines.push(t.account);
-    return `<button type="button" class="ball ${cls}" data-act="edit" data-id="${esc(t.id)}" data-k="ball:${esc(t.id)}" data-tip="${tk(lines)}" aria-label="${esc(lines.join(". "))}"><i></i>${isChanged(t) ? '<b class="chg"></b>' : ""}${t.aplus ? '<b class="ap"></b>' : ""}</button>`;
+    return `<button type="button" class="ball ${cls}" data-act="${S.view === "backtest" ? "noop" : "edit"}" data-id="${esc(t.id)}" data-k="ball:${esc(t.id)}" data-tip="${tk(lines)}" aria-label="${esc(lines.join(". "))}"><i></i>${isChanged(t) ? '<b class="chg"></b>' : ""}${t.aplus ? '<b class="ap"></b>' : ""}</button>`;
   }
   function cardRuns(d, i) {
     const N = d.bt.normal || null, run = d.run;
@@ -1261,9 +1282,10 @@ button.cd:hover { border-color: var(--ink3); }
 
   function pageOverview(d) {
     const now = Date.now();
-    const eyebrow = `${esc(fmt(now, HOB, { weekday: "long", day: "numeric", month: "long" }))} in Hobart · NY session ${esc(dLabel(lastSession(now)))}`;
+    const eyebrow = d.BT ? esc(btWhat()) : `${esc(fmt(now, HOB, { weekday: "long", day: "numeric", month: "long" }))} in Hobart · NY session ${esc(dLabel(lastSession(now)))}`;
     let lede;
     if (!S.loaded) lede = "Loading your journal…";
+    else if (d.BT) lede = `The plan's ${plural(d.all.length, "trade")} from the backtest year, each as the indicator would have taken it. Your live trades are under Live.`;
     else if (!S.trades.length) lede = "Log each trade with the button below. The steps are under Trades › How to log a trade.";
     else {
       const last = d.days.slice().reverse().find((x) => x.n && x.known);
@@ -1291,7 +1313,7 @@ button.cd:hover { border-color: var(--ink3); }
       ? `<span class="p">${isNum(pp) ? fPts(pp) : "–"}</span><span class="d">the plan</span>`
       : `<span class="p">${isNum(yp) ? fPts(yp) : "–"}</span><span class="d">${u != null ? fUsd(u) : isChanged(t) && isNum(pp) ? "as shown " + fPts(pp) : isNum(yp) ? "pts" : "add P&L"}</span>`;
     const shot = t.shot ? `<button type="button" class="thumb" data-act="shot" data-v="${esc(t.shot)}" aria-label="Open the chart screenshot"><img src="${esc(assetSrc(t.shot))}" data-asset="${esc(t.shot)}" alt="" loading="lazy"></button>` : "";
-    return `<div class="row${isTaken(t) ? "" : " missed"}" data-act="edit" data-id="${esc(t.id)}" data-k="row:${esc(t.id)}" role="button" tabindex="0" aria-label="${esc(title + ", " + w.ny)}">
+    return `<div class="row${isTaken(t) ? "" : " missed"}" data-act="${S.view === "backtest" ? "noop" : "edit"}" data-id="${esc(t.id)}" data-k="row:${esc(t.id)}" role="button" tabindex="0" aria-label="${esc(title + ", " + w.ny)}">
       ${setupTile(t)}
       <div><div class="r-t">${esc(title)}</div><div class="r-s">${esc(sub)}</div><div class="r-chips">${chips.join("")}</div></div>
       ${shot}<div class="amt">${amt}</div><span class="round sm go" aria-hidden="true">${ICON.arrow}</span></div>`;
@@ -1315,7 +1337,7 @@ button.cd:hover { border-color: var(--ink3); }
     const missed = d.all.length - d.taken.length;
     const lede = d.all.length ? `${plural(d.taken.length, "trade")} taken${missed ? ` · ${missed} missed` : ""}. Grouped by NY evening; tap a trade to open it.` : "Nothing logged yet. Use “Log a trade” below.";
     const actions = `<button type="button" class="pill" data-act="guide" data-k="guide">How to log a trade</button>` + (S.downloads && d.all.length ? `<button type="button" class="pill" data-act="export" data-k="export">${ICON.download}Export CSV</button>` : "");
-    return `<main class="page${rising()}">${pageHead(esc(`${d.signals.length} signals · ${d.all.length} entries`), "Trades", esc(lede), actions)}
+    return `<main class="page${rising()}">${pageHead(esc(d.BT ? btWhat() : `${d.signals.length} signals · ${d.all.length} entries`), "Trades", esc(d.BT ? `The plan's ${plural(d.all.length, "trade")} from the backtest year, newest first. Read only.` : lede), d.BT ? "" : actions)}
       ${d.all.length ? `<div class="filters rz" style="--i:1" role="group" aria-label="Filter the trades">${chips}</div>` : ""}
       <article class="card list rz" style="--i:2">${groups || `<p class="empty">${d.all.length ? "No trades match this filter." : "No trades yet."}</p>`}</article></main>`;
   }
@@ -1323,7 +1345,7 @@ button.cd:hover { border-color: var(--ink3); }
   // ---------- calendar: the month, each NY evening's trades and result ----------
   const cMoney = (v, usdM) => { if (!usdM) return fPts(v); const a = Math.abs(v); return Math.round(a) === 0 ? "$0" : sgn(v) + "$" + (a >= 1000 ? (a / 1000).toFixed(1).replace(/\.0$/, "") + "k" : Math.round(a)); };
   function pageCalendar(d) {
-    const now = eveningDate();
+    const now = d.end;
     if (!S.cal) S.cal = { y: Number(now.slice(0, 4)), mo: Number(now.slice(5, 7)) - 1, day: null };
     const { y, mo } = S.cal, pad = (n) => String(n).padStart(2, "0");
     const key = `${y}-${pad(mo + 1)}`;
@@ -1355,7 +1377,7 @@ button.cd:hover { border-color: var(--ink3); }
       else {
         const ds = `${key}-${pad(dd)}`, x = info(ds), ms = missed[ds] || [];
         wk.n += x.L.length; wk.w += x.w; wk.l += x.l; wk.net += x.net; wk.known += x.k.length;
-        const today = ds === now ? " today" : "", isSel = ds === sel;
+        const today = !d.BT && ds === now ? " today" : "", isSel = ds === sel;
         if (!x.L.length && !ms.length && (closedNight(ds) || ds > now)) grid += `<span class="cd ${closedNight(ds) ? "closed" : "future"}${today}"><span class="cd-n">${dd}</span></span>`;
         else {
           const v = x.L.length ? (x.k.length ? cMoney(x.net, usdM) : `${x.w}W ${x.l}L`) : "";
@@ -1384,7 +1406,7 @@ button.cd:hover { border-color: var(--ink3); }
       detail = `<div class="sess"><div class="sess-h"><span class="sd">${esc(dLabel(sel))}</span><span class="sn">${plural(list.length, "entry", "entries")}${x.k.length ? " · " + esc(usdM ? fUsd(x.net) : fPts(x.net) + " pts") : ""}</span></div>${list.map(row).join("") || '<p class="empty">No trades that night.</p>'}</div>`;
     }
     const units = usdM ? "Dollars across your accounts" : "Points per contract";
-    return `<main class="page${rising()}">${pageHead(esc("NY evenings · " + units.toLowerCase()), "Calendar", "Each NY evening's trades and result. Tap a day to see its trades.")}
+    return `<main class="page${rising()}">${pageHead(esc(d.BT ? btWhat() : "NY evenings · " + units.toLowerCase()), "Calendar", "Each NY evening's trades and result. Tap a day to see its trades.")}
       <section class="grid" style="margin-top:0">
         <article class="card s12 rz" style="--i:1"><div class="mhead">${nav}<div class="msum">${sum}</div></div><div class="mgrid">${grid}</div></article>
         <article class="card s12 list rz" style="--i:2">${detail}</article>
@@ -1463,7 +1485,7 @@ button.cd:hover { border-color: var(--ink3); }
     const toggle = `<button type="button" class="pill${S.countMissed ? " on" : ""}" data-act="missed" data-k="missed" aria-pressed="${S.countMissed}">${S.countMissed ? ICON.check : ""}Count missed signals too</button>`;
     const eyebrow = bt.version ? `Backtest ${esc(bt.version)}${bt.window ? " · " + esc(bt.window) : ""}` : "Backtest";
     const btMissing = APP && S.loaded && !(bt.plan && isNum(bt.plan.winRate)) ? `<div class="card notice rz" style="--i:1"><p><b>Your backtest numbers aren't on this device yet.</b> They're kept off the public app, like your trades. Import them from your backup file, or turn on sync to pull them from your gist.</p><button type="button" class="pill" data-act="sync" data-k="bt-sync">Sync and backup</button></div>` : "";
-    return `<main class="page${rising()}">${btMissing}${pageHead(eyebrow, "The edge", "The plan's live results against the backtest year. A trade you changed still counts here as the indicator's result: this page tests the plan, the Overview tests how you traded it.", toggle)}
+    return `<main class="page${rising()}">${btMissing}${pageHead(eyebrow, "The edge", d.BT ? "The backtest trades against the backtest's own numbers, so every row lines up. Switch to Live to test your trades." : "The plan's live results against the backtest year. A trade you changed still counts here as the indicator's result: this page tests the plan, the Overview tests how you traded it.", d.BT ? "" : toggle)}
       <section class="grid" style="margin-top:0">
         <article class="card s12 rz" style="--i:1"><div class="card-h"><h2>Live against the backtest</h2><span class="note">A verdict after 10 wins and losses</span></div>
           <div class="e-head" aria-hidden="true"><span>Setup</span><span>W–L–BE</span><span>Live win rate</span><span>Live</span><span>Backtest</span><span>Verdict</span></div>
@@ -1544,7 +1566,7 @@ button.cd:hover { border-color: var(--ink3); }
     updateClock();
     drawEquity(d);
     if (APP) { const tm = document.querySelector('meta[name="theme-color"]'); if (tm) tm.setAttribute("content", currentTheme() === "dark" ? "#121117" : "#e4e2ea"); }
-    $("#dock").hidden = !S.db || !S.writable;
+    $("#dock").hidden = !S.db || !S.writable || S.view === "backtest";
     if (fk) {
       const el = app.querySelector(`[data-k="${cssq(fk)}"]`);
       if (el) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
@@ -1928,7 +1950,7 @@ button.cd:hover { border-color: var(--ink3); }
       case "new": if (S.db && S.writable) { S.sheet = null; openModal(); } break;
       case "guide": openSheet("guide"); break;
       case "month-nav": {
-        const now = eveningDate(), n = Number(v);
+        const now = S.lastD ? S.lastD.end : eveningDate(), n = Number(v);
         let y = S.cal ? S.cal.y : Number(now.slice(0, 4)), mo = S.cal ? S.cal.mo : Number(now.slice(5, 7)) - 1;
         if (n === 0) { y = Number(now.slice(0, 4)); mo = Number(now.slice(5, 7)) - 1; }
         else { mo += n; if (mo < 0) { mo = 11; y--; } if (mo > 11) { mo = 0; y++; } }
@@ -1947,6 +1969,7 @@ button.cd:hover { border-color: var(--ink3); }
       case "edit": openModal(el.getAttribute("data-id")); break;
       case "filter": S.filter = v; render(); break;
       case "missed": S.countMissed = !S.countMissed; store.set("kj-missed", S.countMissed); render(); break;
+      case "view": if (v !== S.view) { S.view = v === "backtest" ? "backtest" : "live"; store.set("kj-view", S.view); S.cal = null; S.filter = "all"; S.riseUntil = Date.now() + 1400; render(); } break;
       case "export": exportCsv(); break;
       case "shot": { e.stopPropagation(); const vi = $("#viewerImg"); vi.setAttribute("data-asset", v); vi.src = assetSrc(v); viewer.hidden = false; break; }
       case "undo": runUndo(); break;
@@ -2035,7 +2058,7 @@ button.cd:hover { border-color: var(--ink3); }
     if (!S.downloads) return;
     const cols = ["date", "time", "setup", "aplus", "dir", "taken", "exec", "changes", "entry", "stop", "target", "outcome", "exit", "pnl", "myStop", "myPnl", "instrument", "qty", "account", "mfe", "mae", "notes", "sig", "id", "createdAt", "updatedAt"];
     const cell = (v) => { const s = v == null ? "" : Array.isArray(v) ? v.join(" ") : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-    const rows = S.trades.slice().sort(order).map((t) => cols.map((c) => cell(c === "sig" ? sigKey(t) : t[c])).join(","));
+    const rows = (S.view === "backtest" ? S.bt : S.trades).slice().sort(order).map((t) => cols.map((c) => cell(c === "sig" ? sigKey(t) : t[c])).join(","));
     try { await S.downloads.save({ filename: "keystone-journal.csv", data: [cols.join(","), ...rows].join("\n") }); }
     catch (err) { if (!err || err.code !== "declined") toast("Couldn't export the CSV here."); }
   }
@@ -2053,6 +2076,11 @@ button.cd:hover { border-color: var(--ink3); }
       render();
     }, () => { S.loaded = true; S.live = "offline"; render(); }));
     S.unsub.push(S.db.doc("config/backtest").onSnapshot((snap) => { S.backtest = snap.exists ? snap.data() : null; render(); }, () => {}));
+    S.unsub.push(S.db.collection("bt").onSnapshot((snap) => {
+      S.bt = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      if (!S.bt.length && S.view === "backtest") S.view = "live";
+      render();
+    }, () => {}));
   }
   function resync() {
     if (!S.db) { toast("Open the journal on claude.ai while signed in to sync it."); return; }

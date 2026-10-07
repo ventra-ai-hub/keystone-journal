@@ -1,0 +1,2099 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Keystone Journal</title>
+<meta name="description" content="Every trade, win runs, plan adherence and the live edge against the backtest.">
+<meta name="theme-color" content="#121117">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Keystone">
+<link rel="manifest" href="manifest.webmanifest?v=1">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png?v=1">
+<link rel="apple-touch-icon" href="icons/icon-180.png?v=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;500;600&display=swap">
+<style>
+/* Keystone Journal in the Client Success look: frosted glass over a soft blurred backdrop, light Urbanist type,
+   dot-matrix numbers, hairline charts. Charcoal dark mode with a warm glow; the default follows the system. */
+:root {
+  --bg: #e4e2ea; --ink: #1c1a29; --ink2: rgba(28,26,41,.64); --ink3: rgba(28,26,41,.44);
+  --line: rgba(28,26,41,.08); --chip: rgba(28,26,41,.06);
+  --glass: rgba(255,255,255,.5); --glass-hi: rgba(255,255,255,.78); --glass-solid: rgba(251,250,253,.9);
+  --edge: rgba(255,255,255,.72); --shadow: 0 24px 60px -28px rgba(46,36,92,.36);
+  --coral: #ec4a4a; --lime: #c6e43a; --good: #23936f; --warn: #c98317;
+  --honey: #c9921b; --sky: #2f86c9; --peri: #6c62d8; --violet: #7a5cd0; --sea: #23936f; --apricot: #df7434; --stone: #85829a; --blush: #d4577a;
+  --on-sky: #ffffff;
+  --b1: #8e84bf; --b2: #c4bee2; --b3: #c690bb; --b4: #b4acd8; --b5: #cecadd;
+  --grid: rgba(255,255,255,.22); --r: 30px;
+  --font: "Urbanist", "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #121117; --ink: #ecebf3; --ink2: rgba(236,235,243,.68); --ink3: rgba(236,235,243,.42);
+    --line: rgba(255,255,255,.08); --chip: rgba(255,255,255,.07);
+    --glass: rgba(42,40,52,.5); --glass-hi: rgba(54,51,66,.72); --glass-solid: rgba(30,29,37,.94);
+    --edge: rgba(255,255,255,.12); --shadow: 0 24px 60px -24px rgba(0,0,0,.6);
+    --b1: #3b3750; --b2: #524d6c; --b3: #5c3f8a; --b4: #4a3a60; --b5: #1b1a22; --grid: rgba(255,255,255,.04);
+    --good: #5fd3a8; --warn: #f0b04a; --honey: #f0c157; --sky: #7cc0f2; --peri: #a9a2f5; --violet: #a993f2; --sea: #5fd3a8;
+    --apricot: #f6a26b; --stone: #aeabc0; --blush: #f08aa7; --on-sky: #0d2433;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #121117; --ink: #ecebf3; --ink2: rgba(236,235,243,.68); --ink3: rgba(236,235,243,.42);
+  --line: rgba(255,255,255,.08); --chip: rgba(255,255,255,.07);
+  --glass: rgba(42,40,52,.5); --glass-hi: rgba(54,51,66,.72); --glass-solid: rgba(30,29,37,.94);
+  --edge: rgba(255,255,255,.12); --shadow: 0 24px 60px -24px rgba(0,0,0,.6);
+  --b1: #3b3750; --b2: #524d6c; --b3: #5c3f8a; --b4: #4a3a60; --b5: #1b1a22; --grid: rgba(255,255,255,.04);
+  --good: #5fd3a8; --warn: #f0b04a; --honey: #f0c157; --sky: #7cc0f2; --peri: #a9a2f5; --violet: #a993f2; --sea: #5fd3a8;
+  --apricot: #f6a26b; --stone: #aeabc0; --blush: #f08aa7; --on-sky: #0d2433;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { -webkit-text-size-adjust: 100%; }
+html.modal-open { overflow: hidden; }
+body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--ink); font: 400 15px/1.5 var(--font); -webkit-font-smoothing: antialiased; }
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+
+/* backdrop: a soft gradient, four blurred blobs and a faint grid that fades out down the page */
+.backdrop { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; background: linear-gradient(160deg, var(--b5), var(--bg) 60%); }
+.blob { position: absolute; border-radius: 50%; filter: blur(70px); }
+.blob.b1 { width: 48vw; height: 48vw; right: -14vw; top: -18vw; background: var(--b1); opacity: .55; }
+.blob.b2 { width: 42vw; height: 42vw; left: -12vw; top: -16vw; background: var(--b2); opacity: .6; }
+.blob.b3 { width: 40vw; height: 40vw; left: -8vw; top: 34vh; background: var(--b3); opacity: .7; }
+.blob.b4 { width: 46vw; height: 46vw; right: -12vw; bottom: -18vw; background: var(--b4); opacity: .6; }
+.gridl { position: absolute; inset: 0; background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px); background-size: 44px 44px; -webkit-mask-image: linear-gradient(#000, transparent 55%); mask-image: linear-gradient(#000, transparent 55%); }
+
+.wrap { position: relative; z-index: 1; max-width: 1220px; margin: 0 auto; padding: 0 16px 132px; }
+@media (min-width: 760px) { .wrap { padding-inline: 28px; } }
+
+/* glass */
+.card { position: relative; min-width: 0; background: var(--glass); -webkit-backdrop-filter: blur(26px) saturate(1.5); backdrop-filter: blur(26px) saturate(1.5); border: 1px solid var(--edge); border-radius: var(--r); box-shadow: var(--shadow), inset 0 1px 0 var(--edge); }
+
+/* top bar */
+.top { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 18px 0 4px; }
+.brand { display: flex; align-items: center; gap: 10px; white-space: nowrap; font: 500 16px var(--font); letter-spacing: -.01em; }
+.mark { width: 32px; height: 32px; flex: none; border-radius: 9px; box-shadow: 0 6px 16px -8px rgba(46,36,92,.55); }
+.nav { justify-self: center; display: inline-flex; gap: 2px; padding: 4px; border-radius: 999px; border: 1px solid var(--edge); background: var(--glass); -webkit-backdrop-filter: blur(18px) saturate(1.4); backdrop-filter: blur(18px) saturate(1.4); box-shadow: inset 0 1px 0 var(--edge); }
+.nav button { height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: transparent; color: var(--ink2); font: 500 14px var(--font); cursor: pointer; }
+.nav button:hover { color: var(--ink); }
+.nav button[aria-current="page"] { background: var(--ink); color: var(--bg); }
+.tools { display: flex; align-items: center; gap: 8px; }
+.clock { display: inline-flex; align-items: center; gap: 12px; height: 40px; padding: 0 16px; border-radius: 999px; border: 1px solid var(--edge); background: var(--glass); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); font: 400 13.5px var(--font); color: var(--ink2); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.clock b { font-weight: 600; color: var(--ink); }
+.round { position: relative; display: inline-grid; place-items: center; flex: none; width: 40px; height: 40px; padding: 0; border-radius: 50%; border: 1px solid var(--edge); background: var(--glass); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); color: var(--ink); cursor: pointer; box-shadow: inset 0 1px 0 var(--edge); }
+.round.sm { width: 32px; height: 32px; }
+.round:disabled { opacity: .35; cursor: not-allowed; }
+.sync .sdot { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; border-radius: 50%; background: var(--stone); box-shadow: 0 0 0 2px var(--glass-solid); }
+.sync.live .sdot { background: var(--good); }
+.sync.connecting .sdot { background: var(--warn); }
+.sync.offline .sdot { background: var(--coral); }
+@media (max-width: 760px) {
+  .top { grid-template-columns: minmax(0, 1fr) auto; }
+  .nav { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; justify-content: center; }
+  .nav button { flex: 1; padding: 0 6px; font-size: 13.5px; }
+  .clock .hb { display: none; }
+}
+@media (max-width: 400px) { .clock { display: none; } }
+
+.banner { margin: 14px 0 0; padding: 12px 16px; border-radius: 18px; border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent); background: color-mix(in srgb, var(--warn) 12%, var(--glass)); font-size: 14px; }
+
+/* page header */
+.head { padding: 26px 2px 22px; }
+.eyebrow { font: 500 13px var(--font); color: var(--ink2); letter-spacing: .01em; }
+.head h1 { margin: 8px 0 10px; font-weight: 300; font-size: clamp(40px, 5.2vw, 68px); line-height: 1.02; letter-spacing: -.025em; text-wrap: balance; }
+.lede { margin: 0; max-width: 72ch; font-size: 16px; color: var(--ink2); }
+.head-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+
+/* buttons */
+.pill { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 18px; border-radius: 999px; border: 1px solid var(--edge); background: var(--glass-hi); color: var(--ink); font: 500 14px var(--font); cursor: pointer; white-space: nowrap; box-shadow: inset 0 1px 0 var(--edge); }
+.pill.dark { background: var(--ink); color: var(--bg); border-color: transparent; }
+.pill.good { color: var(--good); border-color: color-mix(in srgb, var(--good) 45%, transparent); }
+.pill.danger { color: var(--coral); border-color: color-mix(in srgb, var(--coral) 45%, transparent); }
+.pill.danger.armed { background: var(--coral); border-color: var(--coral); color: #fff; }
+.pill.ghost { background: transparent; box-shadow: none; }
+.pill.on { background: var(--ink); color: var(--bg); border-color: transparent; }
+.pill:disabled { opacity: .5; cursor: not-allowed; }
+
+/* stat tiles */
+.tiles { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
+@media (max-width: 1180px) { .tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 620px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+.tile { display: grid; align-content: space-between; gap: 12px; min-height: 138px; padding: 16px 18px 15px; border-radius: 24px; }
+.t-lbl { display: flex; align-items: center; gap: 7px; font: 500 13.5px var(--font); color: var(--ink2); }
+.adot { width: 7px; height: 7px; border-radius: 50%; background: var(--coral); box-shadow: 0 0 0 3px color-mix(in srgb, var(--coral) 20%, transparent); }
+.t-num { color: var(--ink); line-height: 0; min-width: 0; }
+.tile.alert .t-num { color: var(--coral); }
+.tile.good .t-num { color: var(--good); }
+.t-sub { font-size: 12.5px; line-height: 1.35; color: var(--ink3); }
+.dm { display: block; max-width: 100%; height: auto; }
+
+/* layout */
+.grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.s12 { grid-column: span 12; } .s7 { grid-column: span 7; } .s6 { grid-column: span 6; } .s5 { grid-column: span 5; } .s4 { grid-column: span 4; }
+@media (max-width: 980px) { .s7, .s6, .s5 { grid-column: span 12; } }
+@media (max-width: 700px) { .s4 { grid-column: span 12; } }
+.card-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 14px; padding: 18px 22px 4px; }
+.card-h h2 { margin: 0; font-weight: 400; font-size: 19px; letter-spacing: -.015em; }
+.note { font-size: 13px; color: var(--ink2); }
+.card-b { padding: 10px 22px 20px; }
+@media (max-width: 620px) { .card-h { padding: 16px 16px 4px; } .card-b { padding: 10px 16px 18px; } }
+.ctx { margin: 12px 0 0; max-width: 68ch; font-size: 13.5px; color: var(--ink2); }
+.foot { margin: 12px 0 0; font-size: 13px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.empty { margin: 0; padding: 22px; font-size: 14px; color: var(--ink2); }
+
+/* chips: a coloured dot and the label on a light tint */
+.chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 999px; background: var(--chip); color: var(--ink); font: 500 12px var(--font); white-space: nowrap; }
+.chip > i { width: 7px; height: 7px; border-radius: 50%; background: var(--stone); flex: none; }
+.chip.ok { background: color-mix(in srgb, var(--good) 13%, transparent); } .chip.ok > i { background: var(--good); }
+.chip.loss { background: color-mix(in srgb, var(--blush) 14%, transparent); } .chip.loss > i { background: var(--blush); }
+.chip.late { background: color-mix(in srgb, var(--coral) 13%, transparent); } .chip.late > i { background: var(--coral); }
+.chip.due { background: color-mix(in srgb, var(--warn) 15%, transparent); } .chip.due > i { background: var(--warn); }
+.chip.ap { background: color-mix(in srgb, var(--sky) 15%, transparent); } .chip.ap > i { background: var(--sky); }
+
+
+/* every trade: the balls */
+.runs-b { display: grid; grid-template-columns: minmax(150px, 230px) minmax(0, 1fr); gap: 18px 30px; align-items: start; }
+@media (max-width: 700px) { .runs-b { grid-template-columns: minmax(0, 1fr); } }
+.run-now .cap { margin-top: 10px; font-size: 14px; color: var(--ink2); }
+.run-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 16px 0 0; }
+.run-stats dt { font-size: 12px; color: var(--ink3); }
+.run-stats dd { margin: 2px 0 0; font-weight: 500; }
+.balls { display: flex; flex-wrap: wrap; gap: 2px; min-height: 32px; align-items: center; }
+.ball { position: relative; display: grid; place-items: center; width: 28px; height: 32px; padding: 0; border: 0; border-radius: 10px; background: transparent; cursor: pointer; }
+.ball:hover { background: var(--chip); }
+.ball i { display: block; width: 16px; height: 16px; border-radius: 50%; }
+.ball.win i { background: var(--good); }
+.ball.loss i { box-shadow: inset 0 0 0 2.5px var(--blush); }
+.ball.be i { width: 9px; height: 9px; background: var(--stone); }
+.ball.unk i { border: 1.5px dashed var(--ink3); }
+.ball .chg { position: absolute; left: 50%; bottom: 2px; width: 12px; height: 2.5px; margin-left: -6px; border-radius: 2px; background: var(--warn); }
+.ball .ap { position: absolute; left: 50%; top: 1px; width: 5px; height: 5px; margin-left: -2.5px; border-radius: 50%; background: var(--sky); }
+.empty-b { font-size: 14px; color: var(--ink3); }
+.legend, .keys, .scale-key { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink2); }
+.legend { margin-top: 12px; }
+.legend span, .keys span, .scale-key span { display: inline-flex; align-items: center; gap: 6px; }
+.lg { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+.lg.win { background: var(--good); }
+.lg.loss { box-shadow: inset 0 0 0 2px var(--blush); }
+.lg.be { width: 7px; height: 7px; background: var(--stone); }
+.lg.chg { width: 12px; height: 3px; border-radius: 2px; background: var(--warn); }
+.lg.ap { width: 6px; height: 6px; background: var(--sky); }
+
+/* last 14 nights */
+.fort { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 4px; text-align: center; }
+.fd { display: grid; justify-items: center; gap: 6px; min-width: 0; border-radius: 10px; padding: 2px 0; }
+.fd .wd { font-size: 11px; color: var(--ink3); }
+.fd .c { display: block; width: min(24px, 100%); aspect-ratio: 1; border-radius: 50%; box-shadow: inset 0 0 0 1px var(--line); }
+.fd .dn { font-size: 12px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+/* shape carries the result as well as colour (green and pink sit close for red-green colour blindness): solid = up night,
+   ring = down night, centre dot = flat, the same as the trade balls */
+.fd.pos .c { background: var(--good); box-shadow: none; }
+.fd.neg .c { background: transparent; box-shadow: inset 0 0 0 3px var(--blush); }
+.fd.flat .c { background: radial-gradient(circle, var(--stone) 0 26%, transparent 29%); }
+.fd.closed .c { box-shadow: none; background: var(--chip); opacity: .5; }
+.fd.closed .wd, .fd.closed .dn { opacity: .5; }
+.fd.today .c { outline: 2px solid var(--coral); outline-offset: 2px; filter: drop-shadow(0 0 8px color-mix(in srgb, var(--coral) 55%, transparent)); }
+.fd.today .dn { color: var(--coral); font-weight: 600; }
+.ruler { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); gap: 4px; margin-top: 10px; border-top: 1px solid var(--line); }
+.ruler i { justify-self: center; width: 1px; height: 7px; background: var(--ink3); }
+.ruler i.now { width: 2px; height: 12px; border-radius: 1px; background: var(--coral); }
+
+/* block of 20 */
+.slots { display: grid; grid-template-columns: repeat(20, minmax(0, 1fr)); gap: 4px; }
+.slot { justify-self: center; width: 100%; max-width: 16px; aspect-ratio: 1; border-radius: 50%; }
+.slot.win { background: var(--good); }
+.slot.loss { box-shadow: inset 0 0 0 2px var(--blush); }
+.slot.todo { box-shadow: inset 0 0 0 1px var(--ink3); opacity: .45; }
+.scale { position: relative; height: 46px; margin: 18px 8px 0; }
+.scale .track { position: absolute; left: 0; right: 0; top: 14px; height: 1px; background: var(--ink3); }
+.scale .band, .k-band { background: color-mix(in srgb, var(--lime) 62%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 22%, transparent); }
+.scale .band { position: absolute; top: 7px; height: 15px; border-radius: 8px; }
+.scale .tk { position: absolute; top: 11px; width: 1px; height: 7px; background: var(--ink3); transform: translateX(-50%); }
+.scale .tk.maj { top: 9px; height: 11px; }
+.scale .tl { position: absolute; top: 26px; transform: translateX(-50%); font-size: 11.5px; color: var(--ink3); font-variant-numeric: tabular-nums; }
+.scale .now { position: absolute; top: 14px; width: 14px; height: 14px; border-radius: 50%; background: var(--ink); transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--glass-solid); }
+.scale .pace { position: absolute; top: 14px; width: 12px; height: 12px; border-radius: 50%; background: var(--glass-solid); box-shadow: inset 0 0 0 2px var(--ink2); transform: translate(-50%, -50%); }
+.scale-key { margin-top: 4px; }
+.k-band { display: inline-block; width: 18px; height: 9px; border-radius: 5px; }
+.k-now { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.k-pace { display: inline-block; width: 10px; height: 10px; border-radius: 50%; box-shadow: inset 0 0 0 2px var(--ink2); }
+.past { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+
+/* pastel cards: dark ink on a cool-to-cream gradient in both themes */
+.pastel { position: relative; overflow: hidden; min-width: 0; display: grid; align-content: start; gap: 6px; padding: 18px 20px 20px; border-radius: var(--r); color: #1c1a29; background: linear-gradient(165deg, var(--pa), var(--pb)); box-shadow: var(--shadow); }
+.pastel::before { content: ""; position: absolute; left: -25%; top: -35%; width: 75%; height: 75%; background: radial-gradient(closest-side, rgba(255,255,255,.7), rgba(255,255,255,0)); pointer-events: none; }
+.pastel::after { content: ""; position: absolute; right: -20%; bottom: -35%; width: 65%; height: 75%; border-radius: 50%; background: var(--pd); filter: blur(42px); opacity: .42; pointer-events: none; }
+.pastel > * { position: relative; z-index: 1; }
+.ppill { justify-self: start; display: inline-flex; align-items: center; height: 26px; padding: 0 12px; border-radius: 999px; background: rgba(255,255,255,.55); border: 1px solid rgba(255,255,255,.75); font: 500 12px var(--font); color: #1c1a29; }
+.pastel .big { margin-top: 10px; font-weight: 300; font-size: 52px; line-height: 1; letter-spacing: -.035em; }
+.pastel p { margin: 0; max-width: 36ch; font-size: 14.5px; color: rgba(28,26,41,.78); }
+.pastel .small { margin-top: 6px; font-size: 12.5px; color: rgba(28,26,41,.62); }
+.p-sky { --pa: #8cc4f0; --pb: #eef0e3; --pd: #3c8fd6; }
+.p-sea { --pa: #93dcc4; --pb: #eef3de; --pd: #2a9c7c; }
+.p-apricot { --pa: #f7b088; --pb: #faead4; --pd: #e0743a; }
+.p-peri { --pa: #b3b0f2; --pb: #efe9f5; --pd: #6a61d8; }
+.p-lilac { --pa: #cbbcf2; --pb: #f3effa; --pd: #7a5cd0; }
+.p-mauve { --pa: #e6bcd9; --pb: #f9eff5; --pd: #b0568f; }
+.p-fog { --pa: #c8c4dc; --pb: #f2f1f7; --pd: #6d6890; }
+
+/* equity */
+.eq { min-height: 230px; }
+.eq.is-empty { min-height: 0; }
+.eq svg { display: block; width: 100%; height: 230px; overflow: visible; touch-action: pan-y; }
+.eq-grid { stroke: var(--line); stroke-width: 1; }
+.eq-zero { stroke: var(--ink3); stroke-width: 1; }
+.eq-lbl { fill: var(--ink3); font: 500 11.5px var(--font); font-variant-numeric: tabular-nums; }
+.eq-you { fill: none; stroke: var(--ink); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.eq-plan { fill: none; stroke: var(--violet); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.eq-area { fill: var(--ink); fill-opacity: .06; }
+.eq-dot { stroke: var(--glass-solid); stroke-width: 2; }
+.eq-dot.you { fill: var(--ink); } .eq-dot.plan { fill: var(--violet); }
+.eq-end { fill: var(--ink); font: 600 12.5px var(--font); font-variant-numeric: tabular-nums; }
+.eq-x { stroke: var(--ink3); stroke-width: 1; }
+.keys { margin-bottom: 8px; }
+.k-you, .k-plan { display: inline-block; width: 16px; height: 2px; border-radius: 1px; background: var(--ink); }
+.k-plan { background: var(--violet); }
+
+/* trades */
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.fchip { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--edge); background: var(--glass); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); color: var(--ink2); font: 500 14px var(--font); cursor: pointer; }
+.fchip span { font-size: 12px; color: var(--ink3); font-variant-numeric: tabular-nums; }
+.fchip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: transparent; }
+.fchip[aria-pressed="true"] span { color: inherit; opacity: .7; }
+.list { padding: 6px 0; }
+.sess + .sess { border-top: 1px solid var(--line); }
+.sess-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 16px 22px 6px; }
+.sess-h .sd { font-size: 16px; font-weight: 500; letter-spacing: -.01em; }
+.sess-h .sn { font-size: 13px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.row { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto 32px; gap: 14px; align-items: center; padding: 10px 22px; cursor: pointer; }
+.row:hover, .row:focus-visible { background: var(--chip); }
+.row.missed { opacity: .66; }
+.r-t { font-weight: 500; }
+.r-s { font-size: 12.5px; color: var(--ink2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.r-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.amt { display: grid; justify-items: end; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.amt .p { font-size: 16px; font-weight: 500; }
+.amt .d { font-size: 12px; color: var(--ink2); }
+.thumb { width: 56px; height: 36px; padding: 0; overflow: hidden; border-radius: 10px; border: 1px solid var(--edge); background: var(--chip); cursor: zoom-in; }
+.thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 620px) {
+  .row { grid-template-columns: 40px minmax(0, 1fr) auto; padding: 10px 16px; gap: 12px; }
+  .row .go, .row .thumb { display: none; }
+  .sess-h { padding: 14px 16px 4px; }
+}
+
+/* edge check */
+.e-head, .e-row { display: grid; grid-template-columns: minmax(170px, 1.5fr) 64px minmax(140px, 2.2fr) 48px 56px 136px; gap: 12px; align-items: center; padding: 10px 22px; }
+.e-head { padding-top: 2px; padding-bottom: 4px; font: 500 11.5px var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); }
+.e-row + .e-row { border-top: 1px solid var(--line); }
+.e-row.total { background: var(--chip); }
+.e-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.e-name > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.e-rec, .e-live, .e-bt { font-size: 14px; font-variant-numeric: tabular-nums; }
+.e-bt { color: var(--ink2); }
+.e-rec .alt { display: none; color: var(--ink2); }
+.e-bar { padding: 6px 0; border-radius: 8px; }
+.bar { position: relative; height: 12px; border-radius: 6px; background: var(--chip); }
+.bar .band { position: absolute; top: 0; bottom: 0; border-radius: 6px; background: color-mix(in srgb, var(--ink) 14%, transparent); }
+.bar .bt, .lg-bt { background: var(--lime); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 45%, transparent); }
+.bar .bt { position: absolute; top: -5px; bottom: -5px; width: 4px; margin-left: -2px; border-radius: 2px; }
+.bar .dot { position: absolute; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: var(--ink); transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--glass-solid); }
+.e-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; padding: 12px 22px 18px; font-size: 12.5px; color: var(--ink2); }
+.e-legend span { display: inline-flex; align-items: center; gap: 6px; }
+.lg-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--ink); }
+.lg-band { width: 18px; height: 9px; border-radius: 5px; background: color-mix(in srgb, var(--ink) 14%, transparent); }
+.lg-bt { display: inline-block; width: 4px; height: 13px; border-radius: 2px; }
+@media (max-width: 760px) {
+  .e-head { display: none; }
+  .e-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "name v" "bar bar" "rec rec"; row-gap: 8px; padding: 12px 16px; }
+  .e-name { grid-area: name; } .e-v { grid-area: v; } .e-bar { grid-area: bar; } .e-rec { grid-area: rec; }
+  .e-name > span:last-child { white-space: normal; }
+  .e-live, .e-bt { display: none; }
+  .e-rec .alt { display: inline; }
+  .e-legend { padding: 12px 16px 16px; }
+}
+
+/* blocks, backtest, size */
+.b-row { display: grid; grid-template-columns: 70px minmax(0, 1fr) 52px auto; gap: 12px; align-items: center; padding: 10px 22px; }
+.b-row + .b-row { border-top: 1px solid var(--line); }
+.b-row .b-w { font-variant-numeric: tabular-nums; text-align: right; }
+.mini { position: relative; height: 12px; border-radius: 6px; background: var(--chip); }
+.mini .band { position: absolute; top: 0; bottom: 0; border-radius: 6px; background: color-mix(in srgb, var(--lime) 60%, transparent); }
+.mini .dot { position: absolute; top: 50%; width: 10px; height: 10px; border-radius: 50%; background: var(--ink); transform: translate(-50%, -50%); box-shadow: 0 0 0 2px var(--glass-solid); }
+.bt-row { display: grid; grid-template-columns: minmax(0, 1fr) 52px 52px 64px; gap: 12px; align-items: center; padding: 10px 22px; }
+.bt-row + .bt-row { border-top: 1px solid var(--line); }
+.bt-row.head { padding-top: 2px; padding-bottom: 4px; font: 500 11.5px var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); }
+.bt-row .num { text-align: right; font-variant-numeric: tabular-nums; }
+.bt-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.bt-name .t { font-weight: 500; }
+.bt-name .s { font-size: 12px; color: var(--ink3); }
+@media (max-width: 620px) { .b-row, .bt-row { padding-inline: 16px; } }
+.sz-in { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.sz { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.sz > div { display: grid; gap: 10px; padding: 14px 16px; border-radius: 20px; background: var(--chip); color: var(--ink); }
+.sz span { font-size: 13px; color: var(--ink2); }
+
+/* form controls */
+.fl { display: grid; gap: 6px; min-width: 0; font: 500 13px var(--font); color: var(--ink2); }
+.in { width: 100%; min-width: 0; height: 42px; padding: 0 12px; border-radius: 14px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); font: 500 15px var(--font); font-variant-numeric: tabular-nums; }
+.in::placeholder { color: var(--ink3); font-weight: 400; }
+.in:focus { outline: none; border-color: var(--violet); box-shadow: 0 0 0 3px color-mix(in srgb, var(--violet) 22%, transparent); }
+textarea.in { height: 84px; padding: 10px 12px; resize: vertical; line-height: 1.45; font-weight: 400; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.opt { height: 36px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--chip); color: var(--ink2); font: 500 14px var(--font); cursor: pointer; white-space: nowrap; }
+.opt:hover { color: var(--ink); }
+.opt.on { background: var(--ink); color: var(--bg); border-color: transparent; }
+.opt.win.on { background: color-mix(in srgb, var(--good) 16%, transparent); border-color: var(--good); color: var(--ink); }
+.opt.loss.on { background: color-mix(in srgb, var(--blush) 16%, transparent); border-color: var(--blush); color: var(--ink); }
+.opt.ap.on { background: color-mix(in srgb, var(--sky) 18%, transparent); border-color: var(--sky); color: var(--ink); }
+.opt.chg.on { background: color-mix(in srgb, var(--warn) 18%, transparent); border-color: var(--warn); color: var(--ink); }
+.opt.ghost { background: transparent; border-style: dashed; }
+.opt:disabled { opacity: .4; cursor: not-allowed; }
+.hint { font-size: 12.5px; color: var(--ink3); }
+.calc, .risk { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 13px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.calc b { color: var(--ink); font-weight: 600; }
+.more-btn { justify-self: start; padding: 4px 0; border: 0; background: none; color: var(--violet); font: 500 13.5px var(--font); cursor: pointer; }
+
+/* calendar */
+.cal { margin-top: 4px; padding: 12px; border-radius: 22px; border: 1px solid var(--edge); background: var(--glass-hi); }
+.cal-h { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-weight: 500; }
+.cal-g { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; }
+.cal-g .wd { padding: 2px 0; font-size: 11.5px; color: var(--ink3); }
+.cal-g button { justify-self: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ink); font: 500 14px var(--font); font-variant-numeric: tabular-nums; cursor: pointer; }
+.cal-g button:hover { background: var(--chip); }
+.cal-g button.closed { color: var(--ink3); }
+.cal-g button.today { box-shadow: inset 0 0 0 1.5px var(--coral); }
+.cal-g button.sel { background: var(--ink); color: var(--bg); }
+.cal-g button:disabled { opacity: .3; cursor: not-allowed; background: transparent; }
+
+/* account picker */
+.picker { display: flex; align-items: center; gap: 10px; width: 100%; height: 52px; padding: 0 12px 0 8px; border-radius: 16px; border: 1px solid var(--line); background: var(--chip); color: var(--ink); cursor: pointer; text-align: left; }
+.pk-t { display: grid; flex: 1; min-width: 0; }
+.pk-n { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pk-s { font-size: 12px; color: var(--ink3); }
+.plist { display: grid; gap: 6px; padding: 8px; border-radius: 18px; border: 1px solid var(--edge); background: var(--glass-hi); }
+.pl-rows { display: grid; gap: 2px; max-height: 220px; overflow: auto; scrollbar-width: thin; scrollbar-color: var(--ink3) transparent; }
+.pl-row { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: 0; border-radius: 12px; background: transparent; color: var(--ink); text-align: left; cursor: pointer; }
+.pl-row:hover, .pl-row:focus-visible { background: var(--chip); }
+.pl-row .pk-t { flex: 1; }
+.pl-row .tick { color: var(--good); }
+
+/* screenshot */
+.shot { display: grid; gap: 10px; justify-items: start; padding: 12px; border-radius: 18px; border: 1px dashed var(--ink3); background: var(--chip); }
+.shot img { max-width: 100%; max-height: 180px; border-radius: 10px; border: 1px solid var(--edge); }
+
+/* modal */
+.scrim { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; background: rgba(10,14,18,.36); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.sheet { width: min(640px, 100%); max-height: min(92vh, 1000px); overflow: auto; overscroll-behavior: contain; padding: 22px 22px 18px; border-radius: var(--r); border: 1px solid var(--edge); background: var(--glass-solid); -webkit-backdrop-filter: blur(26px) saturate(1.5); backdrop-filter: blur(26px) saturate(1.5); box-shadow: var(--shadow); }
+@media (max-width: 620px) { .scrim { place-items: end center; padding: 0; } .sheet { border-radius: 26px 26px 0 0; max-height: 94vh; padding: 18px 18px 16px; } }
+.m-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.m-top h2 { margin: 0; font-weight: 300; font-size: 30px; letter-spacing: -.025em; line-height: 1.1; }
+.m-sub { margin: 6px 0 0; font-size: 13.5px; color: var(--ink2); }
+.m-sec { display: grid; gap: 10px; padding: 14px 0; border-top: 1px solid var(--line); }
+.m-top + .m-sec { border-top: 0; }
+.m-lbl { font: 600 11.5px var(--font); letter-spacing: .07em; text-transform: uppercase; color: var(--ink3); }
+.m-lbl.sm { margin-top: 2px; }
+.m-two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.m-three { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.m-err { margin: 4px 0 0; min-height: 1.4em; font-size: 13.5px; color: var(--coral); }
+.m-actions { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 6px; }
+
+/* dock, toast, tooltip, viewer */
+.dock { position: fixed; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 40; padding: 6px; border-radius: 999px; border: 1px solid var(--edge); background: var(--glass); -webkit-backdrop-filter: blur(22px) saturate(1.5); backdrop-filter: blur(22px) saturate(1.5); box-shadow: var(--shadow); }
+.dock .act { display: flex; align-items: center; gap: 12px; height: 52px; padding: 0 6px; border: 0; border-radius: 999px; background: #fff; color: #1c1a29; font: 500 15.5px var(--font); cursor: pointer; box-shadow: 0 10px 26px -14px rgba(0,0,0,.45); }
+.dock .act .i { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #efedf4; color: #1c1a29; }
+.dock .act .lbl { padding: 0 6px 0 2px; white-space: nowrap; }
+.dock .act .go { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #1c1a29; color: #fff; }
+.toast-root { position: fixed; left: 0; right: 0; bottom: 96px; z-index: 70; display: flex; justify-content: center; padding: 0 16px; pointer-events: none; }
+.toast { pointer-events: auto; display: flex; align-items: center; gap: 14px; max-width: 100%; padding: 8px 8px 8px 18px; border-radius: 999px; border: 1px solid var(--edge); background: var(--glass-solid); -webkit-backdrop-filter: blur(22px); backdrop-filter: blur(22px); box-shadow: var(--shadow); font: 500 14px var(--font); }
+.toast.plain { padding-right: 18px; min-height: 50px; }
+.toast .undo { height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--ink); color: var(--bg); font: 500 14px var(--font); cursor: pointer; }
+.tip { position: fixed; z-index: 90; pointer-events: none; max-width: 280px; padding: 9px 12px; border-radius: 14px; border: 1px solid var(--edge); background: var(--glass-solid); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); box-shadow: var(--shadow); font: 400 13px/1.45 var(--font); color: var(--ink2); }
+.tip .tt { font-size: 14px; font-weight: 600; color: var(--ink); }
+.viewer { position: fixed; inset: 0; z-index: 95; display: grid; place-items: center; padding: 24px; background: rgba(8,10,12,.82); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); cursor: zoom-out; }
+.viewer img { max-width: 100%; max-height: 100%; border-radius: 14px; }
+
+/* setup icons: a line drawing of each setup on a frosted tile (no letters) */
+.ict { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 13px; border: 1px solid var(--edge); background: var(--glass-hi); color: var(--ink); box-shadow: inset 0 1px 0 var(--edge); }
+.ict.sm { width: 34px; height: 34px; border-radius: 11px; }
+.ict.ap { background: color-mix(in srgb, var(--sky) 18%, var(--glass-hi)); border-color: color-mix(in srgb, var(--sky) 40%, transparent); color: var(--sky); }
+.ict.off { background: color-mix(in srgb, var(--warn) 16%, var(--glass-hi)); color: var(--warn); }
+.ict.plan { color: var(--violet); }
+
+/* calendar */
+.mhead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding: 18px 22px 8px; }
+.mnav { display: flex; align-items: center; gap: 10px; }
+.mnav h2 { margin: 0; min-width: 9.5ch; text-align: center; font-weight: 400; font-size: 21px; letter-spacing: -.015em; }
+.msum { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.msum b { color: var(--ink); font-weight: 600; }
+.mgrid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)) minmax(70px, .85fr); gap: 6px; padding: 6px 22px 20px; }
+.mh { padding: 0 4px 2px; font: 500 11.5px var(--font); letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); }
+.cd { position: relative; display: grid; align-content: start; gap: 5px; min-width: 0; min-height: 94px; padding: 8px 9px; border-radius: 16px; border: 1px solid var(--line); background: color-mix(in srgb, var(--glass-hi) 55%, transparent); color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+button.cd:hover { border-color: var(--ink3); }
+.cd.blank { visibility: hidden; }
+.cd.closed { border-style: dashed; background: transparent; opacity: .45; cursor: default; }
+.cd.future { background: transparent; opacity: .4; cursor: default; }
+.cd.pos { border-color: color-mix(in srgb, var(--good) 40%, transparent); background: color-mix(in srgb, var(--good) 13%, var(--glass-hi)); }
+.cd.neg { border-color: color-mix(in srgb, var(--blush) 42%, transparent); background: color-mix(in srgb, var(--blush) 12%, var(--glass-hi)); }
+.cd.today { box-shadow: 0 0 0 2px var(--coral); }
+.cd.sel { outline: 2px solid var(--ink); outline-offset: 2px; }
+.cd-n { font-size: 12.5px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.cd.today .cd-n { color: var(--coral); font-weight: 600; }
+.cd-v { overflow: hidden; font-size: 15px; font-weight: 600; letter-spacing: -.01em; font-variant-numeric: tabular-nums; white-space: nowrap; text-overflow: clip; }
+.cd-b { display: flex; flex-wrap: wrap; gap: 3px; }
+.cd-b i { width: 8px; height: 8px; border-radius: 50%; }
+.cd-b .win { background: var(--good); }
+.cd-b .loss { box-shadow: inset 0 0 0 1.6px var(--blush); }
+.cd-b .be { width: 5px; height: 5px; margin: 1.5px; background: var(--stone); }
+.cd-b .unk { box-shadow: inset 0 0 0 1px var(--ink3); }
+.cd-m { font-size: 11.5px; color: var(--ink3); }
+.cw { display: grid; align-content: center; gap: 2px; min-width: 0; padding: 8px 10px; border-radius: 16px; background: var(--chip); }
+.cw-l { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); }
+.cw-v { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cw-s { font-size: 12px; color: var(--ink2); }
+@media (max-width: 760px) {
+  .mhead { padding: 16px 16px 6px; }
+  .mgrid { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; padding: 6px 12px 16px; }
+  .cw, .mh.wk { display: none; }
+  .mh { padding: 0 2px 2px; font-size: 10.5px; letter-spacing: .02em; text-align: center; }
+  .cd { min-height: 58px; padding: 6px 4px; gap: 3px; border-radius: 12px; justify-items: center; text-align: center; }
+  .cd-v { max-width: 100%; font-size: 11px; }
+  .cd-b, .cd-m { display: none; }
+}
+
+/* how-to guide, sync sheet, notices */
+.guide { list-style: none; counter-reset: g; display: grid; gap: 14px; margin: 14px 0 0; padding: 0; }
+.guide li { counter-increment: g; display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 2px 12px; align-items: start; }
+.guide li::before { content: counter(g); grid-row: span 2; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--chip); font: 600 13px var(--font); color: var(--ink); }
+.guide b { font-weight: 600; }
+.guide span { font-size: 14px; color: var(--ink2); }
+.steps { display: grid; gap: 5px; margin: 2px 0 0; padding-left: 20px; font-size: 13px; color: var(--ink2); }
+.m-help { margin: 8px 0 0; padding: 12px 14px; border-radius: 16px; background: var(--chip); font-size: 13.5px; color: var(--ink2); }
+.notice { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 18px; padding: 16px 20px; margin-bottom: 16px; }
+.notice p { margin: 0; max-width: 70ch; font-size: 14px; color: var(--ink2); }
+.notice b { color: var(--ink); font-weight: 600; }
+
+/* motion */
+@media (prefers-reduced-motion: no-preference) {
+  .rising .head, .rising .rz { animation: rise .7s cubic-bezier(.2, .75, .2, 1) both; animation-delay: calc(var(--i, 0) * 55ms); }
+  @keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .card, .pastel, .pill, .round, .fchip, .ball i { transition: transform .2s ease, background-color .2s ease, box-shadow .2s ease, color .2s ease; }
+  .card:hover, .pastel:hover { transform: translateY(-2px); }
+  .pill:hover, .round:hover, .fchip:hover { transform: translateY(-1px); }
+  .ball:hover i { transform: scale(1.18); }
+  .sheet.pop { animation: pop .24s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes pop { from { opacity: 0; transform: scale(.94); } to { opacity: 1; transform: none; } }
+  .toast { animation: tup .28s cubic-bezier(.2, .8, .2, 1); }
+  @keyframes tup { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+}
+</style>
+</head>
+<body>
+<div class="backdrop" aria-hidden="true"><i class="blob b1"></i><i class="blob b2"></i><i class="blob b3"></i><i class="blob b4"></i><i class="gridl"></i></div>
+<div class="wrap">
+  <div class="banner" id="banner" role="status" hidden></div>
+  <div id="app"></div>
+</div>
+<div class="dock" id="dock" hidden>
+  <button type="button" class="act" data-act="new"><span class="i"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="lbl">Log a trade</span><span class="go"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></button>
+</div>
+<div id="modalRoot"></div>
+<div class="toast-root" id="toastRoot" aria-live="polite"></div>
+<div class="tip" id="tip" role="tooltip" hidden></div>
+<div class="viewer" id="viewer" hidden><img id="viewerImg" alt="Trade screenshot"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (s, r = document) => r.querySelector(s);
+  const app = $("#app"), modalRoot = $("#modalRoot"), toastRoot = $("#toastRoot"), tipEl = $("#tip"), viewer = $("#viewer");
+
+  const SETUPS = [
+    { key: "close", name: "Gap tap · in at the close", tag: "Close" },
+    { key: "tapback", name: "Gap tap · tap back", tag: "Tap back" },
+    { key: "close2", name: "Gap tap · second close", tag: "2nd close" },
+    { key: "ob", name: "15m OB pocket", tag: "OB" },
+    { key: "off", name: "Not in the plan", tag: "Off-plan" },
+  ];
+  const SETUP = Object.fromEntries(SETUPS.map((s) => [s.key, s]));
+  const PLAN_SETUPS = SETUPS.filter((s) => s.key !== "off");
+  const GAP = ["close", "tapback", "close2"];
+  const MULT = { GC: 100, MGC: 10 };
+  const NY = "America/New_York", HOB = "Australia/Hobart";
+  const CHANGES = [["stop", "Stop"], ["target", "Target"], ["size", "Size"], ["entry", "Entry"], ["early", "Closed early"], ["moved", "Moved the stop"]];
+  const CHG = Object.fromEntries(CHANGES);
+  const OUTCOMES = [["target", "Target"], ["stop", "Stop"], ["be", "Break-even"], ["time", "Hour's end"]];
+  const OUT = Object.fromEntries(OUTCOMES);
+  const SIGNAL_FIELDS = ["setup", "aplus", "dir", "date", "time", "entry", "stop", "target", "outcome", "exit", "pnl"];
+  const FIELD_LABEL = { entry: "Entry", stop: "Stop", target: "Target", exit: "Exit price", pnl: "Points", qty: "Contracts", myStop: "Your stop", myPnl: "Your P&L", mfe: "Best it got", mae: "Worst heat" };
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  };
+
+  const S = {
+    trades: [], backtest: null, db: null, assets: null, downloads: null, writable: true, loaded: false, live: "connecting",
+    route: "overview", filter: "all", countMissed: store.get("kj-missed", false) === true,
+    maxRisk: Number(store.get("kj-maxrisk", 1000)) > 0 ? Number(store.get("kj-maxrisk", 1000)) : 1000, size: { stop: "" },
+    modal: null, draft: null, toast: null, riseUntil: 0, riseT: null, tips: new Map(), unsub: [], lastD: null, tipFor: null,
+  };
+
+  // ---------- small helpers ----------
+  const isNum = (v) => typeof v === "number" && isFinite(v);
+  const r1 = (v) => Math.round(v * 10) / 10;
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const MINUS = "\u2212";
+  const sgn = (v) => (v > 0 ? "+" : v < 0 ? MINUS : "");
+  const fPts = (v) => sgn(r1(v)) + Math.abs(v).toFixed(1);
+  const usd = (v) => "$" + Math.round(Math.abs(v)).toLocaleString("en-US");
+  const fUsd = (v) => (Math.round(v) === 0 ? "$0" : sgn(v) + usd(v));
+  const fUsdC = (v) => { const a = Math.abs(v); return Math.round(a) === 0 ? "$0" : sgn(v) + "$" + (a >= 10000 ? (a / 1000).toFixed(1).replace(/\.0$/, "") + "k" : Math.round(a).toLocaleString("en-US")); };
+  const fPct = (v) => Math.round(v * 100) + "%";
+  const plural = (n, a, b) => n + " " + (n === 1 ? a : b || a + "s");
+  const str = (v) => (v == null ? "" : String(v));
+  const numOf = (s) => { const t = String(s == null ? "" : s).trim().replace(/[\u2212\u2013]/g, "-").replace(/,/g, ""); if (t === "") return null; const n = Number(t); return isFinite(n) ? n : NaN; };
+  const cssq = (s) => (window.CSS && CSS.escape ? CSS.escape(s) : String(s).replace(/["\\]/g, "\\$&"));
+  const ic = (p, s = 18) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+  const ICON = {
+    arrow: ic('<path d="M5 12h14M13 6l6 6-6 6"/>', 16), x: ic('<path d="M6 6l12 12M18 6L6 18"/>'), chev: ic('<path d="M6 9l6 6 6-6"/>', 16),
+    left: ic('<path d="M15 6l-6 6 6 6"/>', 16), right: ic('<path d="M9 6l6 6-6 6"/>', 16), check: ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 16),
+    sun: ic('<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6L6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/>'),
+    moon: ic('<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>'),
+    sync: ic('<path d="M20 11a8 8 0 0 0-14.3-4.9M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9M20 20v-4h-4"/>'),
+    download: ic('<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>', 16),
+  };
+  // a small line drawing for each setup (and the plan, A+ and accounts) in place of letters
+  const SICON = {
+    close: '<path d="M3 15.5h18"/><path d="M12 2.5V5M12 12.5v6.5"/><rect x="8.5" y="5" width="7" height="7.5" rx="1.8"/>',
+    tapback: '<path d="M3 15.5h18"/><path d="M5 5.5l6.2 9 6.8-9"/><path d="M14.8 5.4H18v3.2"/>',
+    close2: '<path d="M3 16.5h18"/><rect x="5" y="7" width="5" height="6" rx="1.3"/><path d="M7.5 4.5V7M7.5 13v5"/><rect x="14" y="5" width="5" height="6" rx="1.3"/><path d="M16.5 3v2M16.5 11v7"/>',
+    ob: '<rect x="3.5" y="13" width="17" height="6.5" rx="2"/><rect x="10" y="3.5" width="4" height="5.5" rx="1.1"/><path d="M12 9v6"/>',
+    off: '<circle cx="12" cy="12" r="8"/><path d="M6.4 17.6L17.6 6.4"/>',
+    aplus: '<path d="M12 3.5l2.2 6.3 6.3 2.2-6.3 2.2L12 20.5l-2.2-6.3L3.5 12l6.3-2.2z"/>',
+    plan: [7, 12, 17].map((y) => [7, 12, 17].map((x) => `<circle cx="${x}" cy="${y}" r="1.8" fill="currentColor" stroke="none"/>`).join("")).join(""),
+    account: '<rect x="3.5" y="6" width="17" height="12" rx="2.6"/><path d="M3.5 10.2h17M7 14.6h3.5"/>',
+    add: '<path d="M12 6v12M6 12h12"/>',
+    none: '<circle cx="12" cy="12" r="7.5"/><path d="M8.5 12h7"/>',
+  };
+  const tileIc = (k, cls) => `<span class="ict${cls ? " " + cls : ""}" aria-hidden="true">${ic(SICON[k] || SICON.off, cls && cls.includes("sm") ? 17 : 20)}</span>`;
+  const setupTile = (t, cls) => tileIc(SICON[t.setup] ? t.setup : "off", [cls, t.aplus ? "ap" : t.setup === "off" ? "off" : ""].filter(Boolean).join(" "));
+  const MARK = `<svg class="mark" viewBox="0 0 32 32" aria-hidden="true"><defs><linearGradient id="kjMg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#b3abd6"/><stop offset="1" stop-color="#eeebf4"/></linearGradient><radialGradient id="kjMo" cx=".9" cy=".95" r=".7"><stop offset="0" stop-color="#c792d4" stop-opacity=".9"/><stop offset="1" stop-color="#c792d4" stop-opacity="0"/></radialGradient></defs><rect width="32" height="32" rx="9" fill="url(#kjMg)"/><rect width="32" height="32" rx="9" fill="url(#kjMo)"/><rect x="5" y="5" width="22" height="22" rx="7" fill="#fff" fill-opacity=".55"/>${[11, 16, 21].map((y) => [11, 16, 21].map((x) => `<circle cx="${x}" cy="${y}" r="1.9" fill="${x === 16 && y === 16 ? "#7a5cd0" : "#1c1a29"}"/>`).join("")).join("")}</svg>`;
+
+  // ---------- dot-matrix numerals (5x7) ----------
+  const GLYPHS = {
+    "0": [".###.", "#...#", "#..##", "#.#.#", "##..#", "#...#", ".###."],
+    "1": ["..#..", ".##..", "..#..", "..#..", "..#..", "..#..", ".###."],
+    "2": [".###.", "#...#", "....#", "...#.", "..#..", ".#...", "#####"],
+    "3": ["#####", "...#.", "..#..", "...#.", "....#", "#...#", ".###."],
+    "4": ["...#.", "..##.", ".#.#.", "#..#.", "#####", "...#.", "...#."],
+    "5": ["#####", "#....", "####.", "....#", "....#", "#...#", ".###."],
+    "6": ["..##.", ".#...", "#....", "####.", "#...#", "#...#", ".###."],
+    "7": ["#####", "....#", "...#.", "..#..", ".#...", ".#...", ".#..."],
+    "8": [".###.", "#...#", "#...#", ".###.", "#...#", "#...#", ".###."],
+    "9": [".###.", "#...#", "#...#", ".####", "....#", "...#.", ".##.."],
+    "$": ["..#..", ".####", "#.#..", ".###.", "..#.#", "####.", "..#.."],
+    ",": ["..", "..", "..", "..", ".#", ".#", "#."],
+    ".": [".", ".", ".", ".", ".", ".", "#"],
+    "-": ["....", "....", "....", "####", "....", "....", "...."],
+    "+": [".....", "..#..", "..#..", "#####", "..#..", "..#..", "....."],
+    "/": ["....#", "....#", "...#.", "..#..", ".#...", "#....", "#...."],
+    "%": ["##..#", "##..#", "...#.", "..#..", ".#...", "#..##", "#..##"],
+    "k": ["#...", "#...", "#..#", "#.#.", "##..", "#.#.", "#..#"],
+    "W": ["#...#", "#...#", "#...#", "#.#.#", "#.#.#", "##.##", "#...#"],
+    "L": ["#....", "#....", "#....", "#....", "#....", "#....", "#####"],
+    " ": ["..", "..", "..", "..", "..", "..", ".."],
+  };
+  function dm(text, h, label) {
+    let s = String(text == null ? "" : text).replace(/[\u2212\u2013]/g, "-");
+    if (!s) s = "-";
+    const chars = [...s].filter((c) => GLYPHS[c]);
+    let x = 0, dots = "";
+    chars.forEach((ch, i) => {
+      const g = GLYPHS[ch], w = g[0].length;
+      for (let r = 0; r < 7; r++) for (let c = 0; c < w; c++) if (g[r][c] === "#") dots += `<circle cx="${x + c + 0.5}" cy="${r + 0.5}" r=".36"/>`;
+      x += w + (i < chars.length - 1 ? 1 : 0);
+    });
+    const k = h / 7;
+    return `<svg class="dm" viewBox="0 0 ${x} 7" width="${(x * k).toFixed(1)}" height="${h}" fill="currentColor" role="img" aria-label="${esc(label || text)}">${dots}</svg>`;
+  }
+
+  // ---------- time ----------
+  function tzOffset(t, tz) {
+    const p = new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit" }).formatToParts(new Date(t));
+    const g = (k) => Number((p.find((x) => x.type === k) || {}).value);
+    return Date.UTC(g("year"), g("month") - 1, g("day"), g("hour"), g("minute"), g("second")) - t;
+  }
+  function nyInstant(date, time) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "")) return null;
+    const [y, m, d] = date.split("-").map(Number);
+    const [hh, mm] = /^\d{2}:\d{2}$/.test(time || "") ? time.split(":").map(Number) : [12, 0];
+    const naive = Date.UTC(y, m - 1, d, hh, mm);
+    let t = naive;
+    for (let i = 0; i < 2; i++) t = naive - tzOffset(t, NY);
+    return t;
+  }
+  const fmt = (t, tz, o) => new Intl.DateTimeFormat("en-GB", { timeZone: tz, ...o }).format(new Date(t));
+  const fDay = (t, tz) => fmt(t, tz, { weekday: "short", day: "numeric", month: "short" });
+  const fTime = (t, tz) => fmt(t, tz, { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+  function partsIn(t, tz) {
+    const p = new Intl.DateTimeFormat("en-US", { timeZone: tz, hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit" }).formatToParts(new Date(t));
+    const g = (k) => (p.find((x) => x.type === k) || {}).value;
+    return { date: `${g("year")}-${g("month")}-${g("day")}`, hour: Number(g("hour")) % 24 };
+  }
+  const validDate = (ds) => /^\d{4}-\d{2}-\d{2}$/.test(ds || "");
+  const dUTC = (ds) => { const [y, m, d] = ds.split("-").map(Number); return new Date(Date.UTC(y, m - 1, d, 12)); };
+  const addDays = (ds, n) => { const x = dUTC(ds); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
+  const wday = (ds) => dUTC(ds).getUTCDay();
+  const dLabel = (ds) => (validDate(ds) ? new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }).format(dUTC(ds)) : "No date");
+  // CME gold has no evening session on Friday or Saturday (NY)
+  const closedNight = (ds) => { const w = wday(ds); return w === 5 || w === 6; };
+  function eveningDate(now = Date.now()) { const p = partsIn(now, NY); return p.hour >= 18 ? p.date : addDays(p.date, -1); }
+  function lastSession(now = Date.now()) { let d = eveningDate(now); while (closedNight(d)) d = addDays(d, -1); return d; }
+  function prevSession(ds) { let d = addDays(ds, -1); while (closedNight(d)) d = addDays(d, -1); return d; }
+  function normTime(s) {
+    const t = String(s || "").trim();
+    if (!t) return "";
+    const m = t.match(/^(\d{1,2}):?(\d{2})$/);
+    if (!m) return null;
+    const h = Number(m[1]), mi = Number(m[2]);
+    if (h > 23 || mi > 59) return null;
+    return String(h).padStart(2, "0") + ":" + m[2];
+  }
+  function whenParts(t) {
+    const hasTime = /^\d{2}:\d{2}$/.test(t.time || "");
+    const at = nyInstant(t.date, t.time);
+    if (at == null) return { ny: "No date", hb: "", hbShort: "" };
+    return { ny: dLabel(t.date) + (hasTime ? " · " + t.time : ""), hb: hasTime ? `${fDay(at, HOB)} · ${fTime(at, HOB)} Hobart` : "", hbShort: hasTime ? `${fTime(at, HOB)} Hobart` : "" };
+  }
+  const order = (a, b) => ((a.date || "") + (a.time || "99:99") + (a.createdAt || "")).localeCompare((b.date || "") + (b.time || "99:99") + (b.createdAt || ""));
+
+  // ---------- trade maths ----------
+  // entry / stop / target / outcome / pnl are the indicator's trade; exec, changes, myStop and myPnl are what you did with it
+  function autoPnl(t) {
+    if (t.outcome === "be") return 0;
+    const s = t.dir === "long" ? 1 : t.dir === "short" ? -1 : 0;
+    if (!s) return null;
+    if (t.outcome === "target" && isNum(t.entry) && isNum(t.target)) return r1((t.target - t.entry) * s);
+    if (t.outcome === "stop" && isNum(t.entry) && isNum(t.stop)) return r1((t.stop - t.entry) * s);
+    if (t.outcome === "time" && isNum(t.entry) && isNum(t.exit)) return r1((t.exit - t.entry) * s);
+    return null;
+  }
+  const planPts = (t) => (isNum(t.pnl) ? t.pnl : autoPnl(t));
+  function planRes(t) {
+    const p = planPts(t);
+    if (isNum(p)) return p > 0 ? 1 : p < 0 ? -1 : 0;
+    return t.outcome === "target" ? 1 : t.outcome === "stop" ? -1 : t.outcome === "be" ? 0 : null;
+  }
+  const isTaken = (t) => t.taken !== false;
+  const isChanged = (t) => isTaken(t) && t.exec === "changed";
+  const onPlan = (t) => isTaken(t) && !isChanged(t) && t.setup !== "off";
+  const yourPts = (t) => (!isTaken(t) ? null : isChanged(t) ? (isNum(t.myPnl) ? t.myPnl : null) : planPts(t));
+  function yourRes(t) {
+    if (!isTaken(t)) return null;
+    if (isChanged(t)) return isNum(t.myPnl) ? Math.sign(t.myPnl) : null;
+    return planRes(t);
+  }
+  const usdOf = (t, pts) => (isNum(pts) && isNum(t.qty) && t.qty > 0 && MULT[t.instrument] ? pts * t.qty * MULT[t.instrument] : null);
+  const sigKey = (t) => t.sig || t.id;
+  function wilson(w, n) {
+    if (!n) return null;
+    const z = 1.96, p = w / n, d = 1 + (z * z) / n, c = (p + (z * z) / (2 * n)) / d;
+    const h = (z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n))) / d;
+    return [Math.max(0, c - h), Math.min(1, c + h)];
+  }
+  // the 5th to 95th percentile of wins in n trades at win rate p: where 9 blocks in 10 finish
+  function binomRange(n, p) {
+    let cum = 0, lo = 0, hi = n, got = false;
+    for (let k = 0; k <= n; k++) {
+      let c = 1;
+      for (let i = 0; i < k; i++) c = (c * (n - i)) / (i + 1);
+      cum += c * Math.pow(p, k) * Math.pow(1 - p, n - k);
+      if (!got && cum >= 0.05) { lo = k; got = true; }
+      if (cum >= 0.95) { hi = k; break; }
+    }
+    return [lo, hi];
+  }
+  function accountList() {
+    const c = new Map();
+    for (const t of S.trades) if (t.account) c.set(t.account, (c.get(t.account) || 0) + 1);
+    return [...c].map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
+  }
+
+  // ---------- the installed app: trades in this browser, synced through a secret GitHub gist ----------
+  // On claude.ai the page uses the artifact's own database; anywhere else (the installed app) it runs on this
+  // stand-in with the same calls, so the rest of the page doesn't know the difference.
+  const APP = !(window.claude && typeof window.claude.use === "function") && !/claude/i.test(location.hostname);
+  const LOCAL_KEY = "kj-app-v1", GIST_FILE = "keystone-journal.json", GH = "https://api.github.com";
+  const PIXEL = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
+  const L = { st: { docs: {}, dead: {} }, subs: new Set(), urls: new Map(), db: null,
+    sync: { state: "off", msg: "", last: 0, busy: false, timer: null } };
+  function localLoad() {
+    try {
+      const o = JSON.parse(localStorage.getItem(LOCAL_KEY) || "null");
+      if (o && o.docs && typeof o.docs === "object") return { docs: o.docs, dead: o.dead || {} };
+    } catch (e) {}
+    return { docs: {}, dead: {} };
+  }
+  function localSave() {
+    try { localStorage.setItem(LOCAL_KEY, JSON.stringify(L.st)); return true; }
+    catch (e) { toast("This browser's storage is full. Download a backup, then remove old screenshots."); return false; }
+  }
+  const tradeEntries = () => Object.entries(L.st.docs).filter(([p]) => p.startsWith("trades/"));
+  const localEmit = () => setTimeout(() => L.subs.forEach((fn) => fn()), 0);
+  // every write is stamped with when it happened (_t), so the newest version of each trade wins when devices sync
+  function localWrite(path, data) {
+    const now = new Date().toISOString();
+    if (data) { L.st.docs[path] = { ...data, _t: now }; delete L.st.dead[path]; }
+    else { delete L.st.docs[path]; L.st.dead[path] = now; }
+    localSave(); localEmit(); schedulePush();
+  }
+  function localDb() {
+    const snap = (path) => { const d = L.st.docs[path]; return { id: path.split("/").pop(), exists: !!d, data: () => (d ? { ...d } : undefined), metadata: { fromCache: true, hasPendingWrites: false } }; };
+    const ref = (path) => ({
+      id: path.split("/").pop(), path,
+      get: async () => snap(path),
+      set: async (data) => localWrite(path, { ...data }),
+      update: async (data) => { if (!L.st.docs[path]) throw { code: "invalid_argument" }; localWrite(path, { ...L.st.docs[path], ...data }); },
+      delete: async () => localWrite(path, null),
+      onSnapshot: (next) => { const fn = () => next(snap(path)); L.subs.add(fn); fn(); return () => L.subs.delete(fn); },
+    });
+    // the backtest numbers are data like the trades: kept on the device and in the gist, never in the public app
+    return {
+      doc: (path) => ref(path),
+      collection: (path) => ({
+        path,
+        doc: (id) => ref(path + "/" + (id || "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7))),
+        onSnapshot: (next) => {
+          const fn = () => next({ docs: tradeEntries().filter(([p]) => p.startsWith(path + "/")).map(([p]) => snap(p)) });
+          L.subs.add(fn); fn();
+          return () => L.subs.delete(fn);
+        },
+      }),
+    };
+  }
+  // screenshots stay on this device (IndexedDB); they don't travel with sync or backups
+  const IDB = {
+    db: null,
+    open() {
+      if (this.db) return Promise.resolve(this.db);
+      return new Promise((res, rej) => { const r = indexedDB.open("kj-assets", 1); r.onupgradeneeded = () => r.result.createObjectStore("blobs"); r.onsuccess = () => { this.db = r.result; res(this.db); }; r.onerror = () => rej(r.error); });
+    },
+    async run(mode, fn) {
+      const db = await this.open();
+      return new Promise((res, rej) => { const tx = db.transaction("blobs", mode); const req = fn(tx.objectStore("blobs")); tx.oncomplete = () => res(req && req.result); tx.onerror = () => rej(tx.error); });
+    },
+    put(id, blob) { return this.run("readwrite", (s) => s.put(blob, id)); },
+    get(id) { return this.run("readonly", (s) => s.get(id)); },
+    del(id) { return this.run("readwrite", (s) => s.delete(id)); },
+  };
+  const localAssets = {
+    upload: async (blob) => { const id = "img" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); await IDB.put(id, blob); const url = URL.createObjectURL(blob); L.urls.set(id, url); return { id, url }; },
+    delete: async (id) => { await IDB.del(id); const u = L.urls.get(id); if (u) URL.revokeObjectURL(u); L.urls.delete(id); },
+  };
+  function assetSrc(id) {
+    if (!APP) return "/_blob/" + encodeURIComponent(id);
+    if (L.urls.has(id)) return L.urls.get(id);
+    IDB.get(id).then((b) => {
+      if (!b) return;
+      const url = URL.createObjectURL(b);
+      L.urls.set(id, url);
+      document.querySelectorAll(`img[data-asset="${cssq(id)}"]`).forEach((im) => { im.src = url; });
+    }).catch(() => {});
+    return PIXEL;
+  }
+  const localDownloads = {
+    save: async ({ filename, data }) => {
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([data], { type: /\.json$/.test(filename) ? "application/json" : "text/csv" }));
+      a.download = filename;
+      document.body.appendChild(a); a.click();
+      setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+    },
+  };
+  const localUse = async (name) => {
+    if (name === "db") return L.db || (L.db = localDb());
+    if (name === "user") return { can: async () => true };
+    if (name === "assets") return "indexedDB" in window ? localAssets : null;
+    if (name === "downloads") return localDownloads;
+    return null;
+  };
+
+  // sync: last write wins for each trade; deletions are kept as tombstones so they travel too
+  function syncCfg() { const c = store.get("kj-sync", null) || {}; return { token: c.token || "", gist: c.gist || "" }; }
+  function mergeStates(a, b) {
+    const out = { docs: {}, dead: {} };
+    const t = (d) => (d && (d._t || d.updatedAt)) || "";
+    const paths = new Set([...Object.keys(a.docs), ...Object.keys(b.docs), ...Object.keys(a.dead || {}), ...Object.keys(b.dead || {})]);
+    for (const p of paths) {
+      if (!SYNCED.test(p)) continue;
+      const A = a.docs[p], B = b.docs[p];
+      const live = !A ? B : !B ? A : t(A) >= t(B) ? A : B;
+      const dead = [a.dead && a.dead[p], b.dead && b.dead[p]].filter(Boolean).sort().pop();
+      if (dead && (!live || dead >= t(live))) out.dead[p] = dead;
+      else if (live) out.docs[p] = live;
+    }
+    return out;
+  }
+  const SYNCED = /^(trades|config)\//;
+  const stamp = (s) => JSON.stringify([Object.keys(s.docs).sort().map((p) => p + "@" + (s.docs[p]._t || s.docs[p].updatedAt || "")), Object.keys(s.dead || {}).sort().map((p) => p + "@" + s.dead[p])]);
+  const payload = () => JSON.stringify({ app: "keystone-journal", v: 1, savedAt: new Date().toISOString(), docs: Object.fromEntries(Object.entries(L.st.docs).filter(([p]) => SYNCED.test(p))), dead: L.st.dead });
+  async function gh(path, opts) {
+    const res = await fetch(GH + path, { ...(opts || {}), headers: { Accept: "application/vnd.github+json", Authorization: "Bearer " + syncCfg().token, ...(opts && opts.body ? { "Content-Type": "application/json" } : {}) } });
+    if (!res.ok) { const e = new Error("GitHub " + res.status); e.status = res.status; throw e; }
+    return res.json();
+  }
+  async function readGist(id) {
+    const g = await gh("/gists/" + encodeURIComponent(id));
+    const f = g.files && g.files[GIST_FILE];
+    if (!f) return { docs: {}, dead: {} };
+    let text = f.content;
+    if (f.truncated && f.raw_url) text = await (await fetch(f.raw_url)).text();
+    try { const o = JSON.parse(text); return { docs: o.docs || {}, dead: o.dead || {} }; } catch (e) { return { docs: {}, dead: {} }; }
+  }
+  const syncLive = () => ({ ok: "live", error: "offline", off: "local" }[L.sync.state] || "connecting");
+  function ago(t) { const s = Math.round((Date.now() - t) / 1000); return s < 60 ? "just now" : s < 3600 ? `${Math.round(s / 60)} min ago` : s < 86400 ? `${Math.round(s / 3600)} h ago` : `${Math.round(s / 86400)} days ago`; }
+  function syncTitle() {
+    const st = L.sync.state;
+    return st === "off" ? "Saved in this browser only. Tap to set up sync" : st === "error" ? "Sync stopped. Tap for details" : st === "ok" ? `Synced ${ago(L.sync.last)}` : "Syncing";
+  }
+  function syncStatusText() {
+    if (!syncCfg().token) return "Saved in this browser only. Sync keeps your phone and Mac in step, and lets Claude read your trades.";
+    const st = L.sync.state;
+    return st === "error" ? L.sync.msg : st === "ok" ? `Synced ${ago(L.sync.last)} with your secret gist.` : "Syncing…";
+  }
+  function setSync(state, msg) {
+    L.sync.state = state;
+    if (msg != null) L.sync.msg = msg;
+    if (!APP) return;
+    S.live = syncLive();
+    const b = app.querySelector(".sync");
+    if (b) { b.className = "round sync " + S.live; b.title = syncTitle(); b.setAttribute("aria-label", syncTitle()); }
+    const st = modalRoot.querySelector("#syncStatus");
+    if (st) st.textContent = syncStatusText();
+  }
+  function schedulePush() {
+    if (!APP || !syncCfg().token) return;
+    clearTimeout(L.sync.timer);
+    setSync("pending");
+    L.sync.timer = setTimeout(() => syncNow(), 2500);
+  }
+  async function syncNow() {
+    const c = syncCfg();
+    if (!APP || !c.token) return;
+    if (L.sync.busy) { schedulePush(); return; }
+    L.sync.busy = true;
+    clearTimeout(L.sync.timer);
+    setSync("busy");
+    try {
+      if (!c.gist) {
+        const g = await gh("/gists", { method: "POST", body: JSON.stringify({ description: "Keystone Journal data", public: false, files: { [GIST_FILE]: { content: payload() } } }) });
+        store.set("kj-sync", { ...c, gist: g.id });
+        if (S.syncDraft) S.syncDraft.gist = g.id;
+      } else {
+        const remote = await readGist(c.gist);
+        const merged = mergeStates(L.st, remote);
+        const changedHere = stamp(merged) !== stamp(L.st);
+        L.st = merged;
+        if (changedHere) { localSave(); localEmit(); }
+        if (stamp(merged) !== stamp(remote)) await gh("/gists/" + encodeURIComponent(c.gist), { method: "PATCH", body: JSON.stringify({ files: { [GIST_FILE]: { content: payload() } } }) });
+      }
+      L.sync.last = Date.now();
+      setSync("ok", "");
+    } catch (e) {
+      setSync("error", e.status === 401 || e.status === 403 ? "GitHub turned the token down. Check it has Gists: Read and write, and hasn't expired."
+        : e.status === 404 ? "Couldn't find that gist. Check the ID, or clear it to make a new one."
+        : "Couldn't reach GitHub. Your trades are saved here and sync once you're back online.");
+    } finally {
+      L.sync.busy = false;
+      if (S.sheet === "sync" && !S.modal) renderModal();
+    }
+  }
+  window.addEventListener("focus", () => { if (APP && syncCfg().token && Date.now() - L.sync.last > 60000) syncNow(); });
+
+  // backup and import (both homes): this app's backup file, or the CSV export
+  async function downloadBackup() {
+    if (!S.downloads) return;
+    const docs = {};
+    for (const t of S.trades) { const { id, ...rest } = t; docs["trades/" + id] = rest; }
+    if (S.backtest && S.backtest.plan) docs["config/backtest"] = S.backtest;
+    const data = JSON.stringify({ app: "keystone-journal", v: 1, savedAt: new Date().toISOString(), docs }, null, 1);
+    try { await S.downloads.save({ filename: `keystone-journal-backup-${new Date().toISOString().slice(0, 10)}.json`, data }); }
+    catch (err) { if (!err || err.code !== "declined") toast("Couldn't save the backup here."); }
+  }
+  function parseCsv(text) {
+    const rows = [];
+    let row = [], cell = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; }
+      else if (ch === '"') q = true;
+      else if (ch === ",") { row.push(cell); cell = ""; }
+      else if (ch === "\n" || ch === "\r") { if (ch === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+      else cell += ch;
+    }
+    if (cell || row.length) { row.push(cell); rows.push(row); }
+    const head = (rows.shift() || []).map((h) => h.trim());
+    return rows.filter((r) => r.some((c) => c !== "")).map((r) => Object.fromEntries(head.map((h, i) => [h, r[i] == null ? "" : r[i]])));
+  }
+  function cleanTrade(o) {
+    if (!o || !SETUP[o.setup]) return null;
+    const t = {};
+    for (const k of ["date", "time", "setup", "dir", "outcome", "exec", "account", "notes", "sig", "createdAt", "updatedAt"]) t[k] = o[k] == null ? "" : String(o[k]);
+    for (const k of ["entry", "stop", "target", "exit", "pnl", "myStop", "myPnl", "qty", "mfe", "mae"]) { const v = o[k]; t[k] = v === "" || v == null ? null : isFinite(Number(v)) ? Number(v) : null; }
+    t.aplus = o.aplus === true || o.aplus === "true";
+    t.taken = !(o.taken === false || o.taken === "false");
+    t.exec = ["shown", "changed", "missed"].includes(t.exec) ? t.exec : t.taken ? "shown" : "missed";
+    t.changes = (Array.isArray(o.changes) ? o.changes : String(o.changes || "").split(/[\s,]+/)).filter((c) => CHG[c]);
+    t.instrument = MULT[o.instrument] ? o.instrument : "GC";
+    t.shot = null;
+    if (!t.sig) delete t.sig;
+    return t;
+  }
+  async function importFile(file) {
+    if (!S.db || !S.writable) { toast("This view can't save trades."); return; }
+    let list, bt = null;
+    try {
+      const text = await file.text();
+      if (text.trim().startsWith("{")) {
+        const o = JSON.parse(text);
+        if (o.plan && o.setups) bt = o;                                   // just the backtest numbers
+        else if (o.docs && o.docs["config/backtest"] && o.docs["config/backtest"].plan) bt = o.docs["config/backtest"];
+        list = o.docs ? Object.entries(o.docs).filter(([p]) => p.startsWith("trades/")).map(([p, d]) => ({ ...d, id: p.slice(7) })) : Array.isArray(o.trades) ? o.trades : [];
+      } else list = parseCsv(text);
+    } catch (e) { toast("That file couldn't be read. Pick a backup from this journal or its CSV export."); return; }
+    if (bt) { const { _t, ...clean } = bt; try { await S.db.doc("config/backtest").set(clean); } catch (e) { bt = null; } }
+    let added = 0, had = 0, skipped = 0;
+    for (const o of list) {
+      const t = cleanTrade(o);
+      if (!t) { skipped++; continue; }
+      const id = /^[A-Za-z0-9_\-.~:@+]{1,200}$/.test(String(o.id || "")) ? String(o.id) : null;
+      if (id && S.trades.some((x) => x.id === id)) { had++; continue; }
+      const now = new Date().toISOString();
+      if (!t.createdAt) t.createdAt = now;
+      if (!t.updatedAt) t.updatedAt = now;
+      const ref = id ? S.db.collection("trades").doc(id) : S.db.collection("trades").doc();
+      if (!t.sig) t.sig = ref.id;
+      try { await ref.set(t); added++; } catch (e) { skipped++; }
+    }
+    toast(`Imported ${plural(added, "trade")}${bt ? " and the backtest numbers" : ""}${had ? ` · ${had} already here` : ""}${skipped ? ` · ${skipped} skipped` : ""}`);
+  }
+
+  // ---------- everything the pages show ----------
+  function derive() {
+    const bt = S.backtest || {};
+    const p0 = bt.plan && isNum(bt.plan.winRate) ? bt.plan.winRate : null;
+    const all = S.trades.slice().sort(order);
+    const taken = all.filter(isTaken);
+
+    // one signal per trade the indicator showed: the same trade on two accounts counts once
+    const groups = new Map();
+    for (const t of all) { const k = sigKey(t); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(t); }
+    const signals = [];
+    for (const [key, list] of groups) {
+      const t = list.find((x) => planRes(x) != null) || list[0];
+      signals.push({ key, t, list, setup: t.setup, aplus: !!t.aplus && GAP.includes(t.setup), res: planRes(t), pts: planPts(t), taken: list.some(isTaken) });
+    }
+    signals.sort((a, b) => order(a.t, b.t));
+    const plan = signals.filter((s) => s.setup !== "off" && (S.countMissed || s.taken));
+    const T = { w: plan.filter((s) => s.res === 1).length, l: plan.filter((s) => s.res === -1).length, be: plan.filter((s) => s.res === 0).length };
+    const wr = T.w + T.l ? T.w / (T.w + T.l) : null;
+
+    // your trades: results, runs, money
+    const yours = taken.map((t) => ({ t, res: yourRes(t), pts: yourPts(t) }));
+    let run = 0, bestWin = 0, worstRun = 0;
+    for (const y of yours) {
+      if (y.res === 1) run = run > 0 ? run + 1 : 1;
+      else if (y.res === -1) run = run < 0 ? run - 1 : -1;
+      else if (y.res === 0) run = 0;
+      bestWin = Math.max(bestWin, run);
+      worstRun = Math.max(worstRun, -run);
+    }
+    let planRun = 0;
+    for (let i = taken.length - 1; i >= 0; i--) { if (onPlan(taken[i])) planRun++; else break; }
+    const onPlanN = taken.filter(onPlan).length;
+    const known = yours.filter((y) => isNum(y.pts));
+    const usdMode = known.length > 0 && known.every((y) => usdOf(y.t, y.pts) != null);
+    const money = (y, pts) => (usdMode ? usdOf(y.t, pts) : pts);
+    const net = known.reduce((a, y) => a + money(y, y.pts), 0);
+    const changed = taken.filter(isChanged);
+    const cmp = changed.filter((t) => isNum(t.myPnl) && isNum(planPts(t)));
+    const chgCost = cmp.reduce((a, t) => a + (t.myPnl - planPts(t)), 0);
+
+    // equity in trade order, and the same trades as the indicator showed them
+    const eq = { you: [0], plan: [0], rows: [null], usd: usdMode, dd: 0 };
+    let cy = 0, cp = 0, peak = 0, planOk = changed.length > 0;
+    for (const y of known) {
+      cy += money(y, y.pts);
+      peak = Math.max(peak, cy);
+      eq.dd = Math.min(eq.dd, cy - peak);
+      const pp = planPts(y.t);
+      if (!isNum(pp)) planOk = false;
+      cp += money(y, isNum(pp) ? pp : y.pts);
+      eq.you.push(cy); eq.plan.push(cp); eq.rows.push(y);
+    }
+    if (!planOk) eq.plan = null;
+
+    // blocks of 20 wins and losses
+    const blocks = [];
+    let cur = { w: 0, l: 0, be: 0, items: [] };
+    for (const s of plan) {
+      if (s.res === 1 || s.res === -1) {
+        cur.items.push(s);
+        if (s.res === 1) cur.w++; else cur.l++;
+        if (cur.items.length === 20) { blocks.push(cur); cur = { w: 0, l: 0, be: 0, items: [] }; }
+      } else if (s.res === 0) cur.be++;
+    }
+    const range20 = p0 != null ? binomRange(20, p0) : null;
+
+    // the last 14 NY evenings
+    const end = eveningDate();
+    const days = [];
+    for (let i = 13; i >= 0; i--) {
+      const ds = addDays(end, -i);
+      const list = yours.filter((y) => y.t.date === ds);
+      const k = list.filter((y) => isNum(y.pts));
+      const pts = k.reduce((a, y) => a + y.pts, 0);
+      const usdOk = k.length > 0 && k.every((y) => usdOf(y.t, y.pts) != null);
+      const usdV = usdOk ? k.reduce((a, y) => a + usdOf(y.t, y.pts), 0) : null;
+      const v = usdOk ? usdV : pts;
+      const w = list.filter((y) => y.res === 1).length, l = list.filter((y) => y.res === -1).length;
+      days.push({ ds, n: list.length, known: k.length, w, l, pts, usd: usdV, today: i === 0, closed: closedNight(ds),
+        cls: !list.length ? (closedNight(ds) ? "closed" : "none") : !k.length ? (w > l ? "pos" : l > w ? "neg" : "flat") : v > 0 ? "pos" : v < 0 ? "neg" : "flat" });
+    }
+
+    // the plan live, measured the way the backtest year was
+    const live = { win2: 0, longestLoss: 0, badNights: 0 };
+    let r = 0;
+    for (const s of plan) {
+      if (s.res === 1) { r = r > 0 ? r + 1 : 1; if (r === 2) live.win2++; }
+      else if (s.res === -1) { r = r < 0 ? r - 1 : -1; live.longestLoss = Math.max(live.longestLoss, -r); }
+      else if (s.res === 0) r = 0;
+    }
+    const nightPts = {};
+    for (const s of plan) if (isNum(s.pts)) nightPts[s.t.date] = (nightPts[s.t.date] || 0) + s.pts;
+    live.badNights = Object.values(nightPts).filter((v) => v * 100 < -1000).length;
+
+    let perWeek = null;
+    const firstDate = plan.length && validDate(plan[0].t.date) ? plan[0].t.date : null;
+    if (firstDate) { const span = (dUTC(end) - dUTC(firstDate)) / 864e5 + 1; if (span >= 7) perWeek = plan.length / (span / 7); }
+
+    return { bt, p0, all, taken, signals, plan, T, wr, yours, run, bestWin, worstRun, planRun, onPlanN, usdMode, net, nKnown: known.length,
+      changed, cmp, chgCost, eq, blocks, cur, range20, days, live, perWeek };
+  }
+
+  // ---------- tooltips (text only, never HTML from the data) ----------
+  let tipN = 0;
+  const tk = (lines) => { const k = "t" + ++tipN; S.tips.set(k, lines); return k; };
+  function showTipLines(lines, x, y) {
+    tipEl.replaceChildren(...lines.map((ln, i) => { const d = document.createElement("div"); if (i === 0) d.className = "tt"; d.textContent = ln; return d; }));
+    tipEl.hidden = false;
+    const r = tipEl.getBoundingClientRect();
+    let left = x + 14, top = y - r.height - 12;
+    if (left + r.width > innerWidth - 8) left = x - r.width - 14;
+    if (left < 8) left = 8;
+    if (top < 8) top = y + 20;
+    tipEl.style.left = left + "px";
+    tipEl.style.top = top + "px";
+  }
+  function hideTip() { tipEl.hidden = true; S.tipFor = null; }
+  document.addEventListener("pointerover", (e) => {
+    const el = e.target.closest && e.target.closest("[data-tip]");
+    if (!el || S.modal) return;
+    const lines = S.tips.get(el.getAttribute("data-tip"));
+    if (lines) { S.tipFor = el; showTipLines(lines, e.clientX, e.clientY); }
+  });
+  document.addEventListener("pointerout", (e) => {
+    const el = e.target.closest && e.target.closest("[data-tip]");
+    if (el && !el.contains(e.relatedTarget)) hideTip();
+  });
+  document.addEventListener("focusin", (e) => {
+    const el = e.target.closest && e.target.closest("[data-tip]");
+    if (!el) return;
+    const lines = S.tips.get(el.getAttribute("data-tip"));
+    if (lines) { const r = el.getBoundingClientRect(); S.tipFor = el; showTipLines(lines, r.left + r.width / 2, r.top); }
+  });
+  document.addEventListener("focusout", (e) => { if (S.tipFor && S.tipFor.contains(e.target)) hideTip(); });
+
+  // ---------- page pieces ----------
+  const rising = () => (Date.now() < S.riseUntil ? " rising" : "");
+  function currentTheme() {
+    const t = document.documentElement.getAttribute("data-theme");
+    if (t) return t;
+    return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  function topbar() {
+    const nav = [["overview", "Overview"], ["trades", "Trades"], ["calendar", "Calendar"], ["edge", "Edge"]]
+      .map(([k, l]) => `<button type="button" data-act="nav" data-v="${k}" data-k="nav:${k}"${S.route === k ? ' aria-current="page"' : ""}>${l}</button>`).join("");
+    const dark = currentTheme() === "dark";
+    const syncTxt = APP ? syncTitle() : { live: "Saved to your journal on claude.ai", connecting: "Connecting to your journal", offline: "Lost the connection. Tap to reconnect", local: "Journal storage isn't available in this view" }[S.live];
+    return `<header class="top">
+      <div class="brand">${MARK}<span>Keystone Journal</span></div>
+      <nav class="nav" aria-label="Pages">${nav}</nav>
+      <div class="tools">
+        <div class="clock" id="clock"></div>
+        <button type="button" class="round sync ${S.live}" data-act="sync" data-k="sync" title="${esc(syncTxt)}" aria-label="${esc(syncTxt)}">${ICON.sync}<i class="sdot"></i></button>
+        <button type="button" class="round" data-act="theme" data-k="theme" title="${dark ? "Light mode" : "Dark mode"}" aria-label="${dark ? "Switch to light mode" : "Switch to dark mode"}">${dark ? ICON.sun : ICON.moon}</button>
+      </div>
+    </header>`;
+  }
+  function updateClock() {
+    const el = $("#clock");
+    if (!el) return;
+    const now = Date.now();
+    el.innerHTML = `<span>NY <b>${fTime(now, NY)}</b></span><span class="hb">Hobart <b>${fTime(now, HOB)}</b></span>`;
+  }
+  const pageHead = (eyebrow, h1, lede, extra) => `<section class="head" style="--i:0"><div class="eyebrow">${eyebrow}</div><h1>${h1}</h1><p class="lede">${lede}</p>${extra ? `<div class="head-actions">${extra}</div>` : ""}</section>`;
+  const tile = (i, label, value, sub, mod) => `<div class="tile card rz${mod ? " " + mod : ""}" style="--i:${i}"><div class="t-lbl">${label}${mod === "alert" ? '<i class="adot"></i>' : ""}</div><div class="t-num">${dm(value, 34)}</div><div class="t-sub">${sub}</div></div>`;
+
+  function tiles(d) {
+    const bt = d.bt, N = bt.normal || {}, T = d.T;
+    const btWeek = bt.plan && isNum(bt.plan.perWeek) ? bt.plan.perWeek.toFixed(1) : null;
+    const runTxt = d.run > 0 ? d.run + "W" : d.run < 0 ? -d.run + "L" : "0";
+    const lossNote = N.lossRuns && N.lossRuns["3"] != null ? `3+ in a row came ${N.lossRuns["3"]}× in the backtest year` : "losses come in runs";
+    return [
+      tile(1, "Trades", String(d.taken.length), d.perWeek != null ? `${d.perWeek.toFixed(1)} plan trades a week${btWeek ? ` · backtest ${btWeek}` : ""}` : `${plural(d.plan.length, "plan signal")} so far${btWeek ? ` · backtest ${btWeek} a week` : ""}`),
+      tile(2, "Plan win rate", d.wr == null ? "-" : Math.round(d.wr * 100) + "%", `${d.p0 != null ? `backtest ${fPct(d.p0)} · ` : ""}${T.w}W ${T.l}L${T.be ? ` ${T.be}BE` : ""}`, d.wr != null && d.p0 != null && T.w + T.l >= 10 && d.wr >= d.p0 ? "good" : ""),
+      tile(3, d.usdMode ? "Your net" : "Your net (pts)", d.nKnown ? (d.usdMode ? fUsdC(d.net) : fPts(d.net)) : "-", d.nKnown ? (d.usdMode ? "every account, every contract" : "per contract · add contracts to see $") : "add P&L to see it", d.nKnown && d.net > 0 ? "good" : ""),
+      tile(4, "On plan", d.taken.length ? `${d.onPlanN}/${d.taken.length}` : "-", d.taken.length ? (d.planRun > 1 ? `${d.planRun} in a row as the indicator showed` : "taken as the indicator showed") : "trades taken as shown"),
+      tile(5, "Current run", d.yours.length ? runTxt : "-", d.run < 0 ? lossNote : d.bestWin ? `best ${d.bestWin}W` : "wins and losses in a row"),
+      tile(6, "Changing things", d.cmp.length ? fPts(d.chgCost) : "0", d.cmp.length ? `pts per contract against as shown · ${plural(d.changed.length, "trade")} changed` : "every trade taken as shown", d.cmp.length && d.chgCost < 0 ? "alert" : d.cmp.length && d.chgCost > 0 ? "good" : ""),
+    ].join("");
+  }
+
+  function ballHtml(y) {
+    const t = y.t, s = SETUP[t.setup] || { tag: "?" };
+    const cls = y.res === 1 ? "win" : y.res === -1 ? "loss" : y.res === 0 ? "be" : "unk";
+    const lines = [
+      (y.res === 1 ? "Target" : y.res === -1 ? "Stopped" : y.res === 0 ? "Break-even" : "No result yet") + (isNum(y.pts) ? ` · ${fPts(y.pts)} pts` : ""),
+      `${t.aplus ? "A+ " : ""}${s.tag} ${t.dir || ""} · ${whenParts(t).ny}`,
+    ];
+    if (isChanged(t)) lines.push(`Changed: ${(t.changes || []).map((c) => CHG[c] || c).join(", ") || "something"}${isNum(planPts(t)) ? ` · as shown ${fPts(planPts(t))}` : ""}`);
+    if (t.account) lines.push(t.account);
+    return `<button type="button" class="ball ${cls}" data-act="edit" data-id="${esc(t.id)}" data-k="ball:${esc(t.id)}" data-tip="${tk(lines)}" aria-label="${esc(lines.join(". "))}"><i></i>${isChanged(t) ? '<b class="chg"></b>' : ""}${t.aplus ? '<b class="ap"></b>' : ""}</button>`;
+  }
+  function cardRuns(d, i) {
+    const N = d.bt.normal || null, run = d.run;
+    const big = !d.yours.length ? "-" : run > 0 ? run + "W" : run < 0 ? -run + "L" : "0";
+    const cap = !d.yours.length ? "no trades yet" : run >= 2 ? "wins in a row" : run === 1 ? "win · the last trade" : run <= -2 ? "losses in a row" : run === -1 ? "loss · the last trade" : "the last trade broke even";
+    let ctx = "Each ball is one trade on one account, oldest first. Tap one to open it.";
+    if (N && run <= -2) {
+      const k = N.lossRuns ? N.lossRuns[String(-run)] : null;
+      if (k != null) ctx = `Runs of ${-run} or more losses came ${k} times in the backtest year. They're part of ${d.p0 != null ? `a ${fPct(d.p0)}` : "the"} plan, not a sign it broke.`;
+      else if (-run > (N.longestLossRun || 0)) ctx = `That's longer than any losing run in the backtest year (the longest was ${N.longestLossRun}). Worth checking whether anything was changed.`;
+    } else if (N && run >= 2 && N.winRuns && N.winRuns["2"] != null) ctx = `Runs of 2 or more wins came ${N.winRuns["2"]} times in the backtest year. Each ball is one trade on one account; tap one to open it.`;
+    return `<article class="card s12 rz" style="--i:${i}">
+      <div class="card-h"><h2>Every trade</h2><span class="note">${d.yours.length ? plural(d.yours.length, "trade") + " taken, oldest first" : "Your trades show here as you log them"}</span></div>
+      <div class="card-b runs-b">
+        <div class="run-now">${dm(big, 56, d.yours.length ? `${Math.abs(run)} ${cap}` : "No trades yet")}<div class="cap">${cap}</div>
+          <dl class="run-stats"><div><dt>Best run</dt><dd>${d.bestWin ? plural(d.bestWin, "win") : "–"}</dd></div><div><dt>On plan</dt><dd>${d.planRun ? d.planRun + " in a row" : "–"}</dd></div></dl></div>
+        <div><div class="balls">${d.yours.slice(-150).map(ballHtml).join("") || '<span class="empty-b">No trades yet</span>'}</div>${d.yours.length > 150 ? `<p class="ctx" style="margin-top:6px">Showing the last 150 of ${d.yours.length}. The Trades page has them all.</p>` : ""}
+          <div class="legend"><span><i class="lg win"></i>Target</span><span><i class="lg loss"></i>Stop</span><span><i class="lg be"></i>Break-even</span><span><i class="lg chg"></i>You changed it</span><span><i class="lg ap"></i>A+</span></div>
+          <p class="ctx">${esc(ctx)}</p></div>
+      </div>
+    </article>`;
+  }
+
+  function cardFort(d, i) {
+    const WD = ["S", "M", "T", "W", "T", "F", "S"];
+    const cols = d.days.map((x) => {
+      const money = x.known ? (x.usd != null ? fUsd(x.usd) : fPts(x.pts) + " pts") : "";
+      const lines = x.n
+        ? [money || `${x.w}W ${x.l}L`, `${dLabel(x.ds)} · ${plural(x.n, "trade")} · ${x.w}W ${x.l}L`]
+        : [dLabel(x.ds), x.closed ? "No evening session" : "No trades"];
+      if (x.today) lines.push("The latest NY evening");
+      return `<div class="fd ${x.cls}${x.today ? " today" : ""}" data-tip="${tk(lines)}"${x.n ? ` tabindex="0" data-k="day:${x.ds}"` : ""}><span class="wd">${WD[wday(x.ds)]}</span><span class="c" aria-hidden="true"></span><span class="dn">${Number(x.ds.slice(8))}</span></div>`;
+    }).join("");
+    const ticks = d.days.map((x) => `<i${x.today ? ' class="now"' : ""}></i>`).join("");
+    const act = d.days.filter((x) => x.n);
+    const allUsd = act.length > 0 && act.every((x) => x.usd != null);
+    const tot = act.reduce((a, x) => a + (allUsd ? x.usd : x.pts), 0);
+    const foot = act.length ? `${act.filter((x) => x.cls === "pos").length} green · ${act.filter((x) => x.cls === "neg").length} red · ${allUsd ? fUsd(tot) : fPts(tot) + " pts"}` : "No trades in the last two weeks yet";
+    return `<article class="card s5 rz" style="--i:${i}"><div class="card-h"><h2>Last 14 nights</h2><button type="button" class="more-btn" data-act="nav" data-v="calendar" data-k="to-cal">Open the calendar</button></div>
+      <div class="card-b"><div class="fort">${cols}</div><div class="ruler" aria-hidden="true">${ticks}</div><p class="foot">${foot}</p></div></article>`;
+  }
+
+  function cardBlock(d, i) {
+    const b = d.cur, n = b.items.length, [lo, hi] = d.range20 || [null, null], p0 = d.p0, k = d.blocks.length + 1;
+    const slots = Array.from({ length: 20 }, (_, j) => { const s = b.items[j]; return `<i class="slot ${s ? (s.res === 1 ? "win" : "loss") : "todo"}"></i>`; }).join("");
+    const pos = (v) => ((Math.max(0, Math.min(20, v)) / 20) * 100).toFixed(2) + "%";
+    let marks = "";
+    for (let j = 0; j <= 20; j++) marks += `<i class="tk${j % 5 ? "" : " maj"}" style="left:${pos(j)}"></i>${j % 5 ? "" : `<span class="tl" style="left:${pos(j)}">${j}</span>`}`;
+    const pace = p0 != null ? b.w + (20 - n) * p0 : null;
+    const showPace = pace != null && n > 0 && n < 20;
+    const scale = `<div class="scale" role="img" aria-label="${b.w} wins so far in this block${lo != null ? `; a normal finish is ${lo} to ${hi} wins out of 20` : ""}"><span class="track"></span>${lo != null ? `<span class="band" style="left:${pos(lo)};width:calc(${pos(hi)} - ${pos(lo)})"></span>` : ""}${marks}${showPace ? `<span class="pace" style="left:${pos(pace)}"></span>` : ""}<span class="now" style="left:${pos(b.w)}"></span></div>`;
+    const txt = n === 0
+      ? d.blocks.length ? `Block ${k} starts with the next plan trade.` : "Your first block starts with your first plan trade."
+      : `${plural(b.w, "win")} from ${n} so far${b.be ? ` (plus ${plural(b.be, "break-even")})` : ""}.${lo != null ? ` A ${fPct(p0)} plan finishes 20 with ${lo} to ${hi} wins 9 times in 10, so judge it on the block, not the last trade.` : " Judge the plan on the block, not the last trade."}`;
+    const past = d.blocks.map((bl, j) => `<span class="chip ${lo != null && bl.w < lo ? "late" : "ok"}"><i></i>Block ${j + 1} · ${bl.w}/20</span>`).join("");
+    return `<article class="card s7 rz" style="--i:${i}"><div class="card-h"><h2>This block of 20</h2><span class="note">Block ${k} · the plan's results, 20 wins and losses at a time</span></div>
+      <div class="card-b"><div class="slots" aria-hidden="true">${slots}</div>${scale}
+        <div class="scale-key">${lo != null ? `<span><i class="k-band"></i>Normal finish, ${lo}–${hi} wins</span>` : ""}<span><i class="k-now"></i>Wins so far</span>${showPace ? `<span><i class="k-pace"></i>On pace for about ${Math.round(pace)}</span>` : ""}</div>
+        <p class="ctx">${esc(txt)}</p>${past ? `<div class="past">${past}</div>` : ""}</div></article>`;
+  }
+
+  function normalCards(d, i) {
+    const N = d.bt.normal;
+    if (!N) return "";
+    const v = (x) => (x == null ? "–" : esc(x));
+    return `
+      <article class="pastel p-lilac s4 rz" style="--i:${i}"><span class="ppill">Backtest year</span><div class="big">${v(N.winRuns && N.winRuns["2"])}</div><p>times the plan won 2 or more in a row</p><p class="small">Live so far: ${d.live.win2}</p></article>
+      <article class="pastel p-mauve s4 rz" style="--i:${i + 1}"><span class="ppill">Backtest year</span><div class="big">${v(N.lossRuns && N.lossRuns["3"])}</div><p>runs of 3 or more losses in a row. The longest was ${v(N.longestLossRun)}.</p><p class="small">Live so far: longest ${d.live.longestLoss}</p></article>
+      <article class="pastel p-fog s4 rz" style="--i:${i + 2}"><span class="ppill">Any 20 trades in a row</span><div class="big">${N.block20 ? `${v(N.block20.min)}–${v(N.block20.max)}` : "–"}</div><p>wins, from the worst stretch of the backtest year to the best</p><p class="small">${v(N.badNights)} nights a year lost more than $1,000 at 1 GC</p></article>`;
+  }
+
+  function cardEquity(d, i) {
+    const E = d.eq;
+    const keys = E.plan ? `<div class="keys"><span><i class="k-you"></i>You</span><span><i class="k-plan"></i>The same trades as the indicator showed</span></div>` : "";
+    const foot = d.nKnown ? `Worst drawdown ${E.usd ? fUsd(E.dd) : fPts(E.dd) + " pts"} · longest losing run ${plural(d.worstRun, "trade")}` : "";
+    return `<article class="card s12 rz" style="--i:${i}"><div class="card-h"><h2>Equity</h2><span class="note">${E.usd ? "Dollars across your accounts" : "Points per contract"}, in trade order</span></div>
+      <div class="card-b">${keys}<div class="eq" id="eqBox"></div>${foot ? `<p class="foot">${foot}</p>` : ""}</div></article>`;
+  }
+
+  function pageOverview(d) {
+    const now = Date.now();
+    const eyebrow = `${esc(fmt(now, HOB, { weekday: "long", day: "numeric", month: "long" }))} in Hobart · NY session ${esc(dLabel(lastSession(now)))}`;
+    let lede;
+    if (!S.loaded) lede = "Loading your journal…";
+    else if (!S.trades.length) lede = "Log each trade with the button below. The steps are under Trades › How to log a trade.";
+    else {
+      const last = d.days.slice().reverse().find((x) => x.n && x.known);
+      lede = `${plural(d.taken.length, "trade")} logged · the plan is ${d.wr == null ? "–" : fPct(d.wr)} live${d.p0 != null ? ` against ${fPct(d.p0)} in the backtest` : ""}${last ? ` · ${dLabel(last.ds)} ${last.usd != null ? fUsd(last.usd) : fPts(last.pts) + " pts"}` : ""}`;
+    }
+    const notice = APP && S.loaded && !syncCfg().token ? `<div class="card notice rz" style="--i:1"><p><b>Saved on this device only.</b> Turn on sync to use the journal on your phone and your Mac, and to let Claude read your trades.</p><button type="button" class="pill" data-act="sync" data-k="notice-sync">Set up sync</button></div>` : "";
+    return `<main class="page${rising()}">${pageHead(eyebrow, "Keystone Journal", esc(lede))}${notice}
+      <section class="tiles" aria-label="Summary">${tiles(d)}</section>
+      <section class="grid">${cardRuns(d, 7)}${cardFort(d, 8)}${cardBlock(d, 9)}${normalCards(d, 10)}${cardEquity(d, 13)}</section></main>`;
+  }
+
+  // ---------- trades page ----------
+  function row(t) {
+    const s = SETUP[t.setup] || { tag: t.setup || "?" };
+    const w = whenParts(t);
+    const title = `${t.aplus ? "A+ " : ""}${s.tag} · ${t.dir === "long" ? "Long" : t.dir === "short" ? "Short" : "–"}`;
+    const sub = [t.time ? `${t.time} NY` : "No time", w.hbShort, t.account, isNum(t.qty) && t.qty > 0 ? `${t.qty} ${t.instrument || "GC"}` : ""].filter(Boolean).join(" · ");
+    const pr = planRes(t);
+    const chips = [`<span class="chip ${pr === 1 ? "ok" : pr === -1 ? "loss" : ""}"><i></i>${esc(OUT[t.outcome] || "No result")}</span>`];
+    if (!isTaken(t)) chips.push(`<span class="chip"><i></i>Missed</span>`);
+    if (isChanged(t)) chips.push(`<span class="chip due"><i></i>Changed: ${esc((t.changes || []).map((c) => CHG[c] || c).join(", ") || "something")}</span>`);
+    if (t.setup === "off") chips.push(`<span class="chip due"><i></i>Off-plan</span>`);
+    const yp = yourPts(t), pp = planPts(t), u = usdOf(t, yp);
+    const amt = !isTaken(t)
+      ? `<span class="p">${isNum(pp) ? fPts(pp) : "–"}</span><span class="d">the plan</span>`
+      : `<span class="p">${isNum(yp) ? fPts(yp) : "–"}</span><span class="d">${u != null ? fUsd(u) : isChanged(t) && isNum(pp) ? "as shown " + fPts(pp) : isNum(yp) ? "pts" : "add P&L"}</span>`;
+    const shot = t.shot ? `<button type="button" class="thumb" data-act="shot" data-v="${esc(t.shot)}" aria-label="Open the chart screenshot"><img src="${esc(assetSrc(t.shot))}" data-asset="${esc(t.shot)}" alt="" loading="lazy"></button>` : "";
+    return `<div class="row${isTaken(t) ? "" : " missed"}" data-act="edit" data-id="${esc(t.id)}" data-k="row:${esc(t.id)}" role="button" tabindex="0" aria-label="${esc(title + ", " + w.ny)}">
+      ${setupTile(t)}
+      <div><div class="r-t">${esc(title)}</div><div class="r-s">${esc(sub)}</div><div class="r-chips">${chips.join("")}</div></div>
+      ${shot}<div class="amt">${amt}</div><span class="round sm go" aria-hidden="true">${ICON.arrow}</span></div>`;
+  }
+  function pageTrades(d) {
+    const F = [["all", "All"], ["close", "Close"], ["tapback", "Tap back"], ["close2", "2nd close"], ["ob", "OB"], ["off", "Off-plan"], ["aplus", "A+"], ["changed", "Changed"], ["missed", "Missed"]];
+    const match = (t, k) => (k === "all" ? true : k === "aplus" ? !!t.aplus : k === "changed" ? isChanged(t) : k === "missed" ? !isTaken(t) : t.setup === k);
+    const counts = Object.fromEntries(F.map(([k]) => [k, d.all.filter((t) => match(t, k)).length]));
+    if (S.filter !== "all" && !counts[S.filter]) S.filter = "all";
+    const chips = F.filter(([k]) => k === "all" || counts[k]).map(([k, l]) => `<button type="button" class="fchip" data-act="filter" data-v="${k}" data-k="filter:${k}" aria-pressed="${S.filter === k}">${l}<span>${counts[k]}</span></button>`).join("");
+    const list = d.all.filter((t) => match(t, S.filter)).reverse();
+    const byDate = new Map();
+    for (const t of list) { const k = validDate(t.date) ? t.date : "none"; if (!byDate.has(k)) byDate.set(k, []); byDate.get(k).push(t); }
+    const groups = [...byDate].map(([ds, ts]) => {
+      const k = ts.filter((t) => isNum(yourPts(t)));
+      const allUsd = k.length > 0 && k.every((t) => usdOf(t, yourPts(t)) != null);
+      const net = k.reduce((a, t) => a + (allUsd ? usdOf(t, yourPts(t)) : yourPts(t)), 0);
+      const nt = k.length ? (allUsd ? fUsd(net) : fPts(net) + " pts") : "";
+      return `<div class="sess"><div class="sess-h"><span class="sd">${ds === "none" ? "No date" : esc(dLabel(ds))}</span><span class="sn">${plural(ts.length, "trade")}${nt ? " · " + nt : ""}</span></div>${ts.map(row).join("")}</div>`;
+    }).join("");
+    const missed = d.all.length - d.taken.length;
+    const lede = d.all.length ? `${plural(d.taken.length, "trade")} taken${missed ? ` · ${missed} missed` : ""}. Grouped by NY evening; tap a trade to open it.` : "Nothing logged yet. Use “Log a trade” below.";
+    const actions = `<button type="button" class="pill" data-act="guide" data-k="guide">How to log a trade</button>` + (S.downloads && d.all.length ? `<button type="button" class="pill" data-act="export" data-k="export">${ICON.download}Export CSV</button>` : "");
+    return `<main class="page${rising()}">${pageHead(esc(`${d.signals.length} signals · ${d.all.length} entries`), "Trades", esc(lede), actions)}
+      ${d.all.length ? `<div class="filters rz" style="--i:1" role="group" aria-label="Filter the trades">${chips}</div>` : ""}
+      <article class="card list rz" style="--i:2">${groups || `<p class="empty">${d.all.length ? "No trades match this filter." : "No trades yet."}</p>`}</article></main>`;
+  }
+
+  // ---------- calendar: the month, each NY evening's trades and result ----------
+  const cMoney = (v, usdM) => { if (!usdM) return fPts(v); const a = Math.abs(v); return Math.round(a) === 0 ? "$0" : sgn(v) + "$" + (a >= 1000 ? (a / 1000).toFixed(1).replace(/\.0$/, "") + "k" : Math.round(a)); };
+  function pageCalendar(d) {
+    const now = eveningDate();
+    if (!S.cal) S.cal = { y: Number(now.slice(0, 4)), mo: Number(now.slice(5, 7)) - 1, day: null };
+    const { y, mo } = S.cal, pad = (n) => String(n).padStart(2, "0");
+    const key = `${y}-${pad(mo + 1)}`;
+    const nDays = new Date(Date.UTC(y, mo + 1, 0, 12)).getUTCDate();
+    const lead = new Date(Date.UTC(y, mo, 1, 12)).getUTCDay();
+    const label = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", month: "long", year: "numeric" }).format(new Date(Date.UTC(y, mo, 1, 12)));
+    const mine = d.yours.filter((x) => (x.t.date || "").startsWith(key));
+    const known = mine.filter((x) => isNum(x.pts));
+    const usdM = known.length > 0 && known.every((x) => usdOf(x.t, x.pts) != null);
+    const val = (x) => (usdM ? usdOf(x.t, x.pts) : x.pts);
+    const byDay = {}, missed = {};
+    for (const x of mine) (byDay[x.t.date] = byDay[x.t.date] || []).push(x);
+    for (const t of d.all) if (!isTaken(t) && (t.date || "").startsWith(key)) (missed[t.date] = missed[t.date] || []).push(t);
+    const info = (ds) => {
+      const L = byDay[ds] || [], k = L.filter((x) => isNum(x.pts));
+      const w = L.filter((x) => x.res === 1).length, l = L.filter((x) => x.res === -1).length;
+      const net = k.reduce((a, x) => a + val(x), 0);
+      return { L, k, w, l, net, cls: !L.length ? "" : k.length ? (net > 0 ? "pos" : net < 0 ? "neg" : "") : w > l ? "pos" : l > w ? "neg" : "" };
+    };
+    const daysWith = Object.keys(byDay).concat(Object.keys(missed)).sort();
+    const sel = S.cal.day && S.cal.day.startsWith(key) ? S.cal.day : daysWith.length ? daysWith[daysWith.length - 1] : null;
+    // the month grid, Sunday first (CME gold's evenings run Sunday to Thursday), with a total for each week
+    let grid = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((w) => `<span class="mh">${w}</span>`).join("") + '<span class="mh wk">Week</span>';
+    const slots = Math.ceil((lead + nDays) / 7) * 7;
+    let wk = { n: 0, net: 0, w: 0, l: 0, known: 0 };
+    for (let i = 0; i < slots; i++) {
+      const dd = i - lead + 1;
+      if (dd < 1 || dd > nDays) grid += '<span class="cd blank" aria-hidden="true"></span>';
+      else {
+        const ds = `${key}-${pad(dd)}`, x = info(ds), ms = missed[ds] || [];
+        wk.n += x.L.length; wk.w += x.w; wk.l += x.l; wk.net += x.net; wk.known += x.k.length;
+        const today = ds === now ? " today" : "", isSel = ds === sel;
+        if (!x.L.length && !ms.length && (closedNight(ds) || ds > now)) grid += `<span class="cd ${closedNight(ds) ? "closed" : "future"}${today}"><span class="cd-n">${dd}</span></span>`;
+        else {
+          const v = x.L.length ? (x.k.length ? cMoney(x.net, usdM) : `${x.w}W ${x.l}L`) : "";
+          const balls = x.L.slice(0, 10).map((b) => `<i class="${b.res === 1 ? "win" : b.res === -1 ? "loss" : b.res === 0 ? "be" : "unk"}"></i>`).join("");
+          const aria = `${dLabel(ds)}: ${x.L.length ? `${plural(x.L.length, "trade")}, ${x.w} won, ${x.l} lost${x.k.length ? ", " + (usdM ? fUsd(x.net) : fPts(x.net) + " points") : ""}` : "no trades"}${ms.length ? `, ${ms.length} missed` : ""}`;
+          grid += `<button type="button" class="cd ${x.cls}${today}${isSel ? " sel" : ""}" data-act="month-day" data-v="${ds}" data-k="mday:${ds}" aria-pressed="${isSel}" aria-label="${esc(aria)}"><span class="cd-n">${dd}</span>${v ? `<span class="cd-v">${esc(v)}</span>` : ""}${balls ? `<span class="cd-b">${balls}</span>` : ""}${ms.length && !x.L.length ? `<span class="cd-m">${ms.length} missed</span>` : ""}</button>`;
+        }
+      }
+      if (i % 7 === 6) {
+        grid += `<span class="cw"><span class="cw-l">Week</span><span class="cw-v">${wk.n ? (wk.known ? esc(cMoney(wk.net, usdM)) : "–") : "–"}</span><span class="cw-s">${wk.n ? `${wk.w}W ${wk.l}L` : ""}</span></span>`;
+        wk = { n: 0, net: 0, w: 0, l: 0, known: 0 };
+      }
+    }
+    const act = Object.keys(byDay).map(info);
+    const W = mine.filter((x) => x.res === 1).length, Lo = mine.filter((x) => x.res === -1).length;
+    const mNet = known.reduce((a, x) => a + val(x), 0);
+    const sum = mine.length
+      ? `<span><b>${esc(usdM ? fUsd(mNet) : fPts(mNet) + " pts")}</b></span><span>${act.filter((x) => x.cls === "pos").length} green · ${act.filter((x) => x.cls === "neg").length} red</span><span>${plural(mine.length, "trade")} · ${W}W ${Lo}L${W + Lo ? ` · ${fPct(W / (W + Lo))} wins` : ""}</span>`
+      : "<span>No trades this month</span>";
+    const nextOk = key < now.slice(0, 7);
+    const nav = `<div class="mnav"><button type="button" class="round sm" data-act="month-nav" data-v="-1" data-k="month-prev" aria-label="Previous month">${ICON.left}</button><h2>${esc(label)}</h2><button type="button" class="round sm" data-act="month-nav" data-v="1" data-k="month-next" aria-label="Next month"${nextOk ? "" : " disabled"}>${ICON.right}</button>${key !== now.slice(0, 7) ? '<button type="button" class="pill ghost" data-act="month-nav" data-v="0" data-k="month-now">This month</button>' : ""}</div>`;
+    // the picked day's trades, as on the Trades page
+    let detail = `<p class="empty">Pick a day to see its trades.</p>`;
+    if (sel) {
+      const list = d.all.filter((t) => t.date === sel).reverse(), x = info(sel);
+      detail = `<div class="sess"><div class="sess-h"><span class="sd">${esc(dLabel(sel))}</span><span class="sn">${plural(list.length, "entry", "entries")}${x.k.length ? " · " + esc(usdM ? fUsd(x.net) : fPts(x.net) + " pts") : ""}</span></div>${list.map(row).join("") || '<p class="empty">No trades that night.</p>'}</div>`;
+    }
+    const units = usdM ? "Dollars across your accounts" : "Points per contract";
+    return `<main class="page${rising()}">${pageHead(esc("NY evenings · " + units.toLowerCase()), "Calendar", "Each NY evening's trades and result. Tap a day to see its trades.")}
+      <section class="grid" style="margin-top:0">
+        <article class="card s12 rz" style="--i:1"><div class="mhead">${nav}<div class="msum">${sum}</div></div><div class="mgrid">${grid}</div></article>
+        <article class="card s12 list rz" style="--i:2">${detail}</article>
+      </section></main>`;
+  }
+
+  // ---------- edge page ----------
+  function verdict(w, l, p0) {
+    const n = w + l;
+    if (n < 10) return { cls: "", text: `Too early · ${n}/10` };
+    if (!isNum(p0)) return { cls: "", text: "No backtest" };
+    const [lo, hi] = wilson(w, n);
+    if (p0 < lo) return { cls: "ok", text: "Above backtest" };
+    if (p0 > hi) return { cls: "late", text: "Below backtest" };
+    return { cls: "ok", text: "In line" };
+  }
+  function edgeRow(av, name, list, p0, total) {
+    const w = list.filter((s) => s.res === 1).length, l = list.filter((s) => s.res === -1).length, be = list.filter((s) => s.res === 0).length;
+    const n = w + l, wr = n ? w / n : null, ci = wilson(w, n), v = verdict(w, l, p0);
+    let bar = "";
+    if (ci) bar += `<span class="band" style="left:${(ci[0] * 100).toFixed(1)}%;width:${((ci[1] - ci[0]) * 100).toFixed(1)}%"></span>`;
+    if (isNum(p0)) bar += `<span class="bt" style="left:${(p0 * 100).toFixed(1)}%"></span>`;
+    if (wr != null) bar += `<span class="dot" style="left:${(wr * 100).toFixed(1)}%"></span>`;
+    const tip = tk([wr == null ? "No results yet" : `Live ${fPct(wr)} · backtest ${isNum(p0) ? fPct(p0) : "–"}`, `${name}: ${w}W ${l}L${be ? ` ${be}BE` : ""}`, ci ? `The true rate is likely ${fPct(ci[0])} to ${fPct(ci[1])}` : "Needs some results first"]);
+    return `<div class="e-row${total ? " total" : ""}"><div class="e-name">${av}<span>${esc(name)}</span></div>
+      <div class="e-rec">${w}–${l}–${be}<span class="alt"> · live ${wr == null ? "–" : fPct(wr)} · backtest ${isNum(p0) ? fPct(p0) : "–"}</span></div>
+      <div class="e-bar" data-tip="${tip}" tabindex="0" data-k="ebar:${esc(name)}" role="img" aria-label="${esc(`${name}: live ${wr == null ? "none yet" : fPct(wr)}, backtest ${isNum(p0) ? fPct(p0) : "none"}`)}"><div class="bar">${bar}</div></div>
+      <div class="e-live">${wr == null ? "–" : fPct(wr)}</div><div class="e-bt">${isNum(p0) ? fPct(p0) : "–"}</div>
+      <div class="e-v"><span class="chip ${v.cls}"><i></i>${v.text}</span></div></div>`;
+  }
+  function cardBlocks(d, i) {
+    const [lo, hi] = d.range20 || [null, null];
+    const pos = (v) => ((Math.max(0, Math.min(20, v)) / 20) * 100).toFixed(2) + "%";
+    const rows = d.blocks.map((b, j) => ({ b, k: j + 1, done: true })).concat(d.cur.items.length ? [{ b: d.cur, k: d.blocks.length + 1, done: false }] : []);
+    const html = rows.map(({ b, k, done }) => {
+      const st = !done ? ["", "in progress"] : lo == null ? ["", "done"] : b.w < lo ? ["late", "below normal"] : b.w > hi ? ["ok", "above normal"] : ["ok", "normal"];
+      return `<div class="b-row"><span>Block ${k}</span><div class="mini" role="img" aria-label="${b.w} wins from ${b.items.length}">${lo != null ? `<span class="band" style="left:${pos(lo)};width:calc(${pos(hi)} - ${pos(lo)})"></span>` : ""}<span class="dot" style="left:${pos(b.w)}"></span></div><span class="b-w">${b.w}/${b.items.length}</span><span class="chip ${st[0]}"><i></i>${st[1]}</span></div>`;
+    }).join("");
+    return `<article class="card s6 rz" style="--i:${i};align-self:start"><div class="card-h"><h2>Blocks of 20</h2><span class="note">${lo != null ? `Normal finish ${lo}–${hi} wins (9 in 10)` : "Twenty wins and losses at a time"}</span></div>
+      ${html || `<p class="empty">Blocks fill as you log plan trades. Twenty wins and losses make one.</p>`}<div style="height:10px"></div></article>`;
+  }
+  function cardBacktest(d, i) {
+    const bt = d.bt, set = bt.setups || {};
+    const line = (av, name, sub, x) => `<div class="bt-row"><div class="bt-name">${av}<div><div class="t">${esc(name)}</div>${sub ? `<div class="s">${esc(sub)}</div>` : ""}</div></div><span class="num">${x && isNum(x.perYear) ? x.perYear : "–"}</span><span class="num">${x && isNum(x.winRate) ? fPct(x.winRate) : "–"}</span><span class="num">${x && isNum(x.usdPerTrade) ? "$" + x.usdPerTrade : "–"}</span></div>`;
+    const rows = PLAN_SETUPS.map((s) => line(tileIc(s.key, "sm"), s.name, set[s.key] && set[s.key].bracket, set[s.key])).join("")
+      + line(tileIc("aplus", "sm ap"), "A+ gap taps", bt.aplus && bt.aplus.note, bt.aplus)
+      + line(tileIc("plan", "sm plan"), "The plan", "scaling in, 1 GC a trade", bt.plan);
+    return `<article class="card s6 rz" style="--i:${i}"><div class="card-h"><h2>The backtest</h2><span class="note">${esc(bt.version || "")}${bt.window ? " · " + esc(bt.window) : ""}</span></div>
+      <div class="bt-row head"><span>Setup</span><span class="num">A year</span><span class="num">Win</span><span class="num">$ a trade</span></div>${rows}<div style="height:10px"></div></article>`;
+  }
+  function cardTested(d, i) {
+    const H = d.bt.heat;
+    if (!H || !H.closeWinners5) return "";
+    return `<article class="pastel p-peri s5 rz" style="--i:${i}"><span class="ppill">In at the close · backtest year</span><div class="big">1 in ${Math.round(H.closeWinners / H.closeWinners5)}</div>
+      <p>winning closes went 5 or more points against before they hit target (${esc(H.closeWinners5)} of ${esc(H.closeWinners)}).</p>
+      <p class="small">With its stop cut to 5 points it wins ${fPct(H.closeStop5WinRate)} instead of ${fPct(H.closeWinRate)}, and makes +${esc(H.closeStop5Net)} points a year instead of +${esc(H.closeNet)}. The plan's numbers only hold with the plan's stop.</p></article>`;
+  }
+  function sizeOut() {
+    const st = numOf(S.size.stop), max = S.maxRisk;
+    if (!isNum(st) || st <= 0 || !(max > 0)) return `<p class="ctx">Type the stop the indicator shows to see what fits inside your max risk.</p>`;
+    const gc = Math.floor((max + 1e-9) / (st * 100)), mgc = Math.floor((max + 1e-9) / (st * 10));
+    return `<div class="sz"><div>${dm(String(gc), 40, gc + " GC")}<span>GC · risk ${usd(gc * st * 100)}</span></div><div>${dm(String(mgc), 40, mgc + " MGC")}<span>MGC · risk ${usd(mgc * st * 10)}</span></div></div>
+      <p class="ctx">${gc === 0 ? `One GC is ${usd(st * 100)} at a ${st.toFixed(1)} point stop, over your ${usd(max)}. Micros keep the stop where the indicator put it.` : `Keep the indicator's ${st.toFixed(1)} point stop and change the contracts to fit, never the stop.`}</p>`;
+  }
+  function cardSizer(i) {
+    return `<article class="card s7 rz" style="--i:${i}"><div class="card-h"><h2>Size from the stop</h2><span class="note">Contracts = max risk ÷ (stop × $ a point)</span></div>
+      <div class="card-b"><div class="sz-in"><label class="fl">The indicator's stop (pts)<input class="in" data-size="stop" data-k="size:stop" inputmode="decimal" autocomplete="off" placeholder="7.0" value="${esc(S.size.stop)}"></label>
+        <label class="fl">Max risk a trade ($)<input class="in" data-size="max" data-k="size:max" inputmode="numeric" autocomplete="off" value="${esc(String(S.maxRisk))}"></label></div>
+        <div id="sizeOut">${sizeOut()}</div></div></article>`;
+  }
+  function pageEdge(d) {
+    const bt = d.bt, set = bt.setups || {};
+    const rows = PLAN_SETUPS.map((s) => edgeRow(tileIc(s.key, "sm"), s.name, d.plan.filter((x) => x.setup === s.key), set[s.key] && set[s.key].winRate)).join("")
+      + edgeRow(tileIc("aplus", "sm ap"), "A+ gap taps", d.plan.filter((x) => x.aplus), bt.aplus && bt.aplus.winRate)
+      + edgeRow(tileIc("plan", "sm plan"), "Every plan trade", d.plan, bt.plan && bt.plan.winRate, true);
+    const toggle = `<button type="button" class="pill${S.countMissed ? " on" : ""}" data-act="missed" data-k="missed" aria-pressed="${S.countMissed}">${S.countMissed ? ICON.check : ""}Count missed signals too</button>`;
+    const eyebrow = bt.version ? `Backtest ${esc(bt.version)}${bt.window ? " · " + esc(bt.window) : ""}` : "Backtest";
+    const btMissing = APP && S.loaded && !(bt.plan && isNum(bt.plan.winRate)) ? `<div class="card notice rz" style="--i:1"><p><b>Your backtest numbers aren't on this device yet.</b> They're kept off the public app, like your trades. Import them from your backup file, or turn on sync to pull them from your gist.</p><button type="button" class="pill" data-act="sync" data-k="bt-sync">Sync and backup</button></div>` : "";
+    return `<main class="page${rising()}">${btMissing}${pageHead(eyebrow, "The edge", "The plan's live results against the backtest year. A trade you changed still counts here as the indicator's result: this page tests the plan, the Overview tests how you traded it.", toggle)}
+      <section class="grid" style="margin-top:0">
+        <article class="card s12 rz" style="--i:1"><div class="card-h"><h2>Live against the backtest</h2><span class="note">A verdict after 10 wins and losses</span></div>
+          <div class="e-head" aria-hidden="true"><span>Setup</span><span>W–L–BE</span><span>Live win rate</span><span>Live</span><span>Backtest</span><span>Verdict</span></div>
+          ${rows}
+          <div class="e-legend"><span><i class="lg-dot"></i>Live win rate</span><span><i class="lg-band"></i>Where the true rate likely is (95%)</span><span><i class="lg-bt"></i>Backtest</span></div></article>
+        ${cardBlocks(d, 2)}${cardBacktest(d, 3)}${cardTested(d, 4)}${cardSizer(5)}
+      </section></main>`;
+  }
+
+  // ---------- equity chart ----------
+  function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))); const f = raw / p; return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p; }
+  function drawEquity(d) {
+    const box = document.getElementById("eqBox");
+    if (!box) return;
+    const E = d.eq;
+    if (E.you.length < 3) {
+      box.classList.add("is-empty");
+      box.innerHTML = `<p class="ctx" style="margin:0">The line starts once two trades have points. Each trade adds its result in order, so the run-ups and the drawdowns show.</p>`;
+      return;
+    }
+    box.classList.remove("is-empty");
+    const W = Math.max(260, Math.floor(box.getBoundingClientRect().width)), H = 230, L = 58, R = 18, T = 20, B = 28;
+    const vals = E.plan ? E.you.concat(E.plan) : E.you;
+    let lo = Math.min(0, ...vals), hi = Math.max(0, ...vals);
+    if (hi - lo < 1e-9) { hi += 1; lo -= 1; }
+    const step = niceStep((hi - lo) / 4);
+    lo = Math.floor(lo / step + 1e-9) * step;
+    hi = Math.ceil(hi / step - 1e-9) * step;
+    const n = E.you.length - 1;
+    const X = (i) => L + (i * (W - L - R)) / n, Y = (v) => T + ((hi - v) * (H - T - B)) / (hi - lo);
+    const fv = (v) => (E.usd ? fUsdC(v) : fPts(v));
+    const fAxis = (v) => (E.usd ? fUsdC(v) : sgn(v) + Math.abs(v).toFixed(step < 1 ? 1 : 0));
+    let g = "";
+    for (let v = lo, j = 0; v <= hi + step / 2 && j < 12; v += step, j++) {
+      const y = Y(v).toFixed(1), zero = Math.abs(v) < step / 1e6;
+      g += `<line class="${zero ? "eq-zero" : "eq-grid"}" x1="${L}" x2="${W - R}" y1="${y}" y2="${y}"/><text class="eq-lbl" x="${L - 10}" y="${(+y + 4).toFixed(1)}" text-anchor="end">${zero ? "0" : esc(fAxis(v))}</text>`;
+    }
+    const path = (a) => a.map((v, i) => `${i ? "L" : "M"}${X(i).toFixed(1)} ${Y(v).toFixed(1)}`).join(" ");
+    const area = `${path(E.you)} L${X(n).toFixed(1)} ${Y(0).toFixed(1)} L${X(0).toFixed(1)} ${Y(0).toFixed(1)} Z`;
+    const last = E.you[n], ex = X(n), ey = Y(last);
+    // the end label sits on the side away from the other line, inside the plot
+    const below = (E.plan && Y(E.plan[n]) < ey) || ey - 10 < T + 12;
+    const ly = below && ey + 22 <= H - B ? ey + 22 : ey - 10;
+    box.innerHTML = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Equity over ${n} trades, ending at ${esc(fv(last))}${E.plan ? `; the same trades as the indicator showed end at ${esc(fv(E.plan[n]))}` : ""}">
+      ${g}<path class="eq-area" d="${area}"/>${E.plan ? `<path class="eq-plan" d="${path(E.plan)}"/>` : ""}<path class="eq-you" d="${path(E.you)}"/>
+      ${E.plan ? `<circle class="eq-dot plan" cx="${ex.toFixed(1)}" cy="${Y(E.plan[n]).toFixed(1)}" r="4"/>` : ""}<circle class="eq-dot you" cx="${ex.toFixed(1)}" cy="${ey.toFixed(1)}" r="4.5"/>
+      <text class="eq-end" x="${(ex - 10).toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="end">${esc(fv(last))}</text>
+      <text class="eq-lbl" x="${L}" y="${H - 6}">start</text><text class="eq-lbl" x="${W - R}" y="${H - 6}" text-anchor="end">trade ${n}</text>
+      <line class="eq-x" x1="0" x2="0" y1="${T}" y2="${H - B}" visibility="hidden"/>
+      <rect class="eq-hit" x="${L - 6}" y="0" width="${W - L - R + 12}" height="${H}" fill="transparent"/></svg>`;
+    const hit = box.querySelector(".eq-hit"), xl = box.querySelector(".eq-x");
+    const show = (clientX) => {
+      const r = box.querySelector("svg").getBoundingClientRect();
+      const px = ((clientX - r.left) / r.width) * W;
+      const i = Math.max(1, Math.min(n, Math.round(((px - L) / (W - L - R)) * n)));
+      xl.setAttribute("x1", X(i).toFixed(1)); xl.setAttribute("x2", X(i).toFixed(1)); xl.setAttribute("visibility", "visible");
+      const y = E.rows[i], t = y.t, s = SETUP[t.setup] || { tag: "?" };
+      const one = E.usd ? usdOf(t, y.pts) : y.pts;
+      const lines = [`${fv(E.you[i])}${E.usd ? "" : " pts"} after trade ${i}`];
+      if (E.plan) lines.push(`As the indicator showed: ${fv(E.plan[i])}`);
+      lines.push(`${t.aplus ? "A+ " : ""}${s.tag} · ${whenParts(t).ny} · ${fv(one)}`);
+      showTipLines(lines, clientX, r.top + (Y(E.you[i]) / H) * r.height);
+    };
+    hit.addEventListener("pointermove", (e) => show(e.clientX));
+    hit.addEventListener("pointerdown", (e) => show(e.clientX));
+    hit.addEventListener("pointerleave", () => { xl.setAttribute("visibility", "hidden"); hideTip(); });
+  }
+
+  // ---------- render ----------
+  function render() {
+    const ae = document.activeElement;
+    const fk = ae && app.contains(ae) ? ae.getAttribute("data-k") : null;
+    const sel = fk && ae && typeof ae.selectionStart === "number" ? [ae.selectionStart, ae.selectionEnd] : null;
+    S.tips.clear(); tipN = 0; hideTip();
+    const d = derive();
+    S.lastD = d;
+    app.innerHTML = topbar() + (S.route === "trades" ? pageTrades(d) : S.route === "calendar" ? pageCalendar(d) : S.route === "edge" ? pageEdge(d) : pageOverview(d));
+    updateClock();
+    drawEquity(d);
+    if (APP) { const tm = document.querySelector('meta[name="theme-color"]'); if (tm) tm.setAttribute("content", currentTheme() === "dark" ? "#121117" : "#e4e2ea"); }
+    $("#dock").hidden = !S.db || !S.writable;
+    if (fk) {
+      const el = app.querySelector(`[data-k="${cssq(fk)}"]`);
+      if (el) { el.focus({ preventScroll: true }); if (sel && el.setSelectionRange) { try { el.setSelectionRange(sel[0], sel[1]); } catch (e) {} } }
+    }
+    if (rising()) {
+      clearTimeout(S.riseT);
+      S.riseT = setTimeout(() => { const p = app.querySelector(".page.rising"); if (p) p.classList.remove("rising"); }, Math.max(0, S.riseUntil - Date.now()) + 200);
+    }
+  }
+  const routeOf = (h) => { const r = String(h || "").replace(/^#\/?/, "").split("/")[0]; return ["trades", "calendar", "edge"].includes(r) ? r : "overview"; };
+  function go(r) {
+    r = routeOf("#/" + r);
+    const moved = r !== S.route;
+    S.route = r;
+    const h = r === "overview" ? "#/" : "#/" + r;
+    try { if (location.hash !== h) location.hash = h; } catch (e) {}
+    if (moved) { S.riseUntil = Date.now() + 1400; window.scrollTo(0, 0); }
+    render(); // also when the hash can't change (sandboxed previews)
+  }
+  window.addEventListener("hashchange", () => { const r = routeOf(location.hash); if (r !== S.route) go(r); });
+
+  // ---------- toast with undo ----------
+  function toast(msg, undo, done) {
+    if (S.toast) { const prev = S.toast; clearTimeout(prev.timer); S.toast = null; if (prev.done) prev.done(); }
+    const t = { msg, undo, done };
+    S.toast = t;
+    toastRoot.innerHTML = `<div class="toast${undo ? "" : " plain"}" role="status"><span>${esc(msg)}</span>${undo ? '<button type="button" class="undo" data-act="undo">Undo</button>' : ""}</div>`;
+    t.timer = setTimeout(() => { if (S.toast === t) { S.toast = null; toastRoot.innerHTML = ""; if (t.done) t.done(); } }, 5000);
+  }
+  async function runUndo() {
+    const t = S.toast;
+    if (!t || !t.undo) return;
+    clearTimeout(t.timer); S.toast = null; toastRoot.innerHTML = "";
+    try { await t.undo(); toast("Undone"); } catch (e) { toast("Couldn't undo that. Open the trade and fix it by hand."); }
+  }
+  window.addEventListener("pagehide", () => { if (S.toast && S.toast.done) { const t = S.toast; S.toast = null; t.done(); } });
+
+  // ---------- the trade form ----------
+  function blankForm() {
+    const last = store.get("kj-last", {}) || {};
+    return { setup: "", aplus: false, dir: "", date: lastSession(), time: "", entry: "", stop: "", target: "", outcome: "", exit: "", pnl: "",
+      exec: "shown", changes: [], myStop: "", myPnl: "", instrument: MULT[last.instrument] ? last.instrument : "GC",
+      qty: last.qty != null ? String(last.qty) : "", account: last.account || "", mfe: "", mae: "", notes: "" };
+  }
+  function formFrom(t) {
+    return { setup: t.setup || "", aplus: !!t.aplus, dir: t.dir || "", date: t.date || "", time: t.time || "", entry: str(t.entry), stop: str(t.stop), target: str(t.target),
+      outcome: t.outcome || "", exit: str(t.exit), pnl: str(t.pnl), exec: !isTaken(t) ? "missed" : t.exec === "changed" ? "changed" : "shown",
+      changes: Array.isArray(t.changes) ? t.changes.slice() : [], myStop: str(t.myStop), myPnl: str(t.myPnl), instrument: MULT[t.instrument] ? t.instrument : "GC",
+      qty: str(t.qty), account: t.account || "", mfe: str(t.mfe), mae: str(t.mae), notes: t.notes || "" };
+  }
+  function openModal(id, opts) {
+    hideTip();
+    let m;
+    if (id) {
+      const t = S.trades.find((x) => x.id === id);
+      if (!t) return;
+      m = { id, sig: sigKey(t), f: formFrom(t), shotId: t.shot || null };
+    } else if (opts && opts.from) {
+      const t = opts.from, f = blankForm();
+      for (const k of SIGNAL_FIELDS) f[k] = k === "aplus" ? !!t.aplus : str(t[k]);
+      f.account = "";
+      m = { id: null, sig: sigKey(t), f, shotId: null, sibling: true };
+    } else if (S.draft) { m = S.draft; S.draft = null; }
+    else m = { id: null, sig: null, f: blankForm(), shotId: null };
+    m.cal = m.cal || { open: false, y: 0, mo: 0 };
+    m.acct = { open: false, q: "" };
+    m.shot = m.shot || { blob: null, url: null, remove: false };
+    m.more = m.more || !!(m.f.mfe || m.f.mae);
+    m.err = ""; m.busy = false; m.delArmed = false;
+    S.modal = m;
+    renderModal(true);
+  }
+  function closeModal(saved) {
+    const m = S.modal;
+    if (!m) return;
+    clearTimeout(m.delT);
+    if (!saved && !m.id && m.dirty) { S.draft = m; S.modal = null; renderModal(); toast("Draft kept. “Log a trade” opens it again."); return; }
+    if (m.shot.url) URL.revokeObjectURL(m.shot.url);
+    S.modal = null;
+    renderModal();
+  }
+  function opt(act, fld, v, label, on, extra) {
+    return `<button type="button" class="opt${extra || ""}${on ? " on" : ""}" data-act="${act}" data-fld="${fld}" data-v="${esc(v)}" data-k="${act}:${fld}:${esc(v)}" aria-pressed="${on}">${esc(label)}</button>`;
+  }
+  function calHtml(m) {
+    const { y, mo } = m.cal, pad = (n) => String(n).padStart(2, "0");
+    const first = new Date(Date.UTC(y, mo, 1, 12)), lead = (first.getUTCDay() + 6) % 7, nDays = new Date(Date.UTC(y, mo + 1, 0, 12)).getUTCDate();
+    const maxD = eveningDate(), label = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", month: "long", year: "numeric" }).format(first);
+    const nextOk = `${y}-${pad(mo + 1)}` < maxD.slice(0, 7);
+    let cells = ["M", "T", "W", "T", "F", "S", "S"].map((w) => `<span class="wd">${w}</span>`).join("");
+    for (let i = 0; i < lead; i++) cells += "<span></span>";
+    for (let dd = 1; dd <= nDays; dd++) {
+      const ds = `${y}-${pad(mo + 1)}-${pad(dd)}`;
+      cells += `<button type="button" class="${ds === m.f.date ? "sel" : ""}${ds === maxD ? " today" : ""}${closedNight(ds) ? " closed" : ""}" data-act="cal-pick" data-v="${ds}" data-k="day:${ds}"${ds > maxD ? " disabled" : ""} aria-label="${esc(dLabel(ds))}${closedNight(ds) ? ", no evening session" : ""}">${dd}</button>`;
+    }
+    return `<div class="cal"><div class="cal-h"><button type="button" class="round sm" data-act="cal-nav" data-v="-1" data-k="cal-prev" aria-label="Previous month">${ICON.left}</button><span>${esc(label)}</span><button type="button" class="round sm" data-act="cal-nav" data-v="1" data-k="cal-next" aria-label="Next month"${nextOk ? "" : " disabled"}>${ICON.right}</button></div><div class="cal-g">${cells}</div></div>`;
+  }
+  function acctRows(m) {
+    const q = m.acct.q.trim(), ql = q.toLowerCase();
+    const list = accountList().filter((a) => !ql || a.name.toLowerCase().includes(ql));
+    let rows = list.map((a) => `<button type="button" class="pl-row" data-act="acct-pick" data-v="${esc(a.name)}">${tileIc("account", "sm")}<span class="pk-t"><span class="pk-n">${esc(a.name)}</span><span class="pk-s">${plural(a.n, "trade")}</span></span>${a.name === m.f.account ? `<span class="tick">${ICON.check}</span>` : ""}</button>`).join("");
+    if (q && !list.some((a) => a.name.toLowerCase() === ql)) rows = `<button type="button" class="pl-row" data-act="acct-add">${tileIc("add", "sm")}<span class="pk-t"><span class="pk-n">Add “${esc(q)}”</span><span class="pk-s">A new account</span></span></button>` + rows;
+    rows += `<button type="button" class="pl-row" data-act="acct-pick" data-v="">${tileIc("none", "sm")}<span class="pk-t"><span class="pk-n">No account</span></span>${!m.f.account ? `<span class="tick">${ICON.check}</span>` : ""}</button>`;
+    return rows;
+  }
+  function acctHtml(m) {
+    const cur = m.f.account;
+    if (m.acct.open) return `<div class="plist"><input class="in" data-acct-q data-k="acct-q" placeholder="Search or type a new account" autocomplete="off" spellcheck="false" value="${esc(m.acct.q)}" aria-label="Search accounts"><div class="pl-rows" id="plRows">${acctRows(m)}</div></div>`;
+    const n = accountList().find((a) => a.name === cur);
+    return `<button type="button" class="picker" data-act="acct-open" data-k="acct-btn" aria-haspopup="listbox">${tileIc(cur ? "account" : "none", "sm")}<span class="pk-t"><span class="pk-n">${cur ? esc(cur) : "No account"}</span><span class="pk-s">${cur ? (n ? plural(n.n, "trade") + " so far" : "New account") : "Pick one or add one"}</span></span>${ICON.chev}</button>`;
+  }
+  function sheetHtml(m, fresh) {
+    const f = m.f, t0 = m.id ? S.trades.find((x) => x.id === m.id) : null;
+    const title = m.id ? "Edit trade" : m.sibling ? "Same trade, another account" : "Log a trade";
+    const sub = m.id ? (t0 ? whenParts(t0).ny : "") : m.sibling ? "The indicator's details are copied over. Add this account's size and what you did." : "One trade on one account. Took it on two accounts? Save it, open it, then pick “Another account”.";
+    const inp = (k, label, ph, mode, extra) => `<label class="fl">${label}<input class="in" data-f="${k}" data-k="f:${k}" inputmode="${mode || "decimal"}" autocomplete="off" spellcheck="false" placeholder="${esc(ph)}" value="${esc(f[k])}"${extra || ""}></label>`;
+    const s0 = lastSession(), s1 = prevSession(s0);
+    let dates = opt("set", "date", s0, dLabel(s0), f.date === s0) + opt("set", "date", s1, dLabel(s1), f.date === s1);
+    if (f.date && f.date !== s0 && f.date !== s1) dates += opt("set", "date", f.date, dLabel(f.date), true);
+    dates += `<button type="button" class="opt ghost" data-act="cal" data-k="cal" aria-expanded="${m.cal.open}">${m.cal.open ? "Close the calendar" : "Other date"}</button>`;
+    const shotSrc = m.shot.url || (!m.shot.remove && m.shotId ? assetSrc(m.shotId) : null);
+    const changed = f.exec === "changed";
+    return `<div class="sheet${fresh ? " pop" : ""}" role="dialog" aria-modal="true" aria-labelledby="mh">
+      <div class="m-top"><div><h2 id="mh">${title}</h2><p class="m-sub">${esc(sub)}</p>
+        <button type="button" class="more-btn" data-act="form-help" data-k="form-help" aria-expanded="${!!m.help}">${m.help ? "Hide the how-to" : "How to fill this in"}</button>
+        ${m.help ? `<p class="m-help">Copy the indicator's trade exactly as it drew it (hover its tag for the levels), then say what you did with it. Changed the stop, the size or the exit? Pick “Changed something” and add your points. Missed it? Pick “Didn't take it” and still add how it ended. All the steps are under Trades › How to log a trade.</p>` : ""}</div><button type="button" class="round sm" data-act="close" data-k="close" aria-label="Close">${ICON.x}</button></div>
+      <section class="m-sec"><div class="m-lbl">Setup</div><div class="opts">${SETUPS.map((s) => opt("set", "setup", s.key, s.tag, f.setup === s.key)).join("")}</div>
+        <div class="opts"><button type="button" class="opt ap${f.aplus ? " on" : ""}" data-act="aplus" data-k="aplus" aria-pressed="${!!f.aplus}"${!f.setup || GAP.includes(f.setup) ? "" : " disabled"}>A+ · the blue tag</button></div></section>
+      <section class="m-sec m-two"><div style="display:grid;gap:10px"><div class="m-lbl">Direction</div><div class="opts">${opt("set", "dir", "long", "Long", f.dir === "long")}${opt("set", "dir", "short", "Short", f.dir === "short")}</div></div>
+        <div style="display:grid;gap:6px">${inp("time", "Time in NY", "20:35", "numeric", ' maxlength="5"')}<div class="hint" id="hobHint"></div></div></section>
+      <section class="m-sec"><div class="m-lbl">Session · NY date</div><div class="opts">${dates}</div>${m.cal.open ? calHtml(m) : ""}</section>
+      <section class="m-sec"><div class="m-lbl">The indicator's trade</div><div class="m-three">${inp("entry", "Entry", "4398.4")}${inp("stop", "Stop", "4405.4")}${inp("target", "Target", "4392.4")}</div>
+        <div class="m-lbl sm">How it ended</div><div class="opts">${OUTCOMES.map(([k, l]) => opt("set", "outcome", k, l, f.outcome === k, k === "target" ? " win" : k === "stop" ? " loss" : "")).join("")}</div>
+        <div class="m-two">${f.outcome === "time" ? inp("exit", "Exit price", "4395.0") : ""}${inp("pnl", "Points per contract", "auto")}</div><div class="calc" id="calcLine"></div></section>
+      <section class="m-sec"><div class="m-lbl">Your trade</div><div class="opts">${opt("set", "exec", "shown", "As the indicator showed", f.exec === "shown")}${opt("set", "exec", "changed", "Changed something", changed, " chg")}${opt("set", "exec", "missed", "Didn't take it", f.exec === "missed")}</div>
+        ${changed ? `<div class="m-lbl sm">What you changed</div><div class="opts">${CHANGES.map(([k, l]) => `<button type="button" class="opt chg${f.changes.includes(k) ? " on" : ""}" data-act="chg" data-v="${k}" data-k="chg:${k}" aria-pressed="${f.changes.includes(k)}">${l}</button>`).join("")}</div>
+        <div class="m-two">${f.changes.includes("stop") ? inp("myStop", "Your stop (pts from entry)", "5.0") : ""}${inp("myPnl", "Your P&amp;L (pts per contract)", MINUS + "5.3")}</div>` : ""}</section>
+      ${f.exec !== "missed" ? `<section class="m-sec"><div class="m-lbl">Size</div><div class="opts">${opt("set", "instrument", "GC", "GC · $100 a point", f.instrument === "GC")}${opt("set", "instrument", "MGC", "MGC · $10 a point", f.instrument === "MGC")}</div>
+        <div class="m-two">${inp("qty", "Contracts", "1", "numeric")}<label class="fl">Max risk a trade ($)<input class="in" data-maxrisk data-k="maxrisk" inputmode="numeric" autocomplete="off" value="${esc(String(S.maxRisk))}"></label></div>
+        <div class="fl">Account${acctHtml(m)}</div><div class="risk" id="riskLine"></div></section>` : ""}
+      <section class="m-sec"><label class="fl">Notes<textarea class="in" data-f="notes" data-k="f:notes" placeholder="What you saw, what you felt, anything off-script">${esc(f.notes)}</textarea></label>
+        ${S.assets ? `<div class="shot" tabindex="0" data-k="shot" aria-label="Chart screenshot: paste an image or choose a file">${shotSrc ? `<img src="${esc(shotSrc)}"${!m.shot.url && m.shotId ? ` data-asset="${esc(m.shotId)}"` : ""} alt="Chart screenshot">` : `<span class="hint">Paste a chart screenshot (⌘V) or choose a file</span>`}
+          <div class="opts"><button type="button" class="opt ghost" data-act="shot-pick" data-k="shot-pick">${shotSrc ? "Replace" : "Choose file"}</button>${shotSrc ? '<button type="button" class="opt ghost" data-act="shot-remove" data-k="shot-remove">Remove</button>' : ""}</div>
+          <input type="file" id="shotFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden></div>` : ""}
+        <button type="button" class="more-btn" data-act="more" data-k="more" aria-expanded="${!!m.more}">${m.more ? "Hide how far it ran" : "Add how far it ran (MFE / MAE)"}</button>
+        ${m.more ? `<div class="m-two">${inp("mfe", "Best it got (pts)", "6.0")}${inp("mae", "Worst heat (pts)", "5.4")}</div>` : ""}</section>
+      <p class="m-err" role="alert">${esc(m.err)}</p>
+      <div class="m-actions"><button type="button" class="pill dark" data-act="save" data-k="save"${m.busy ? " disabled" : ""}>${m.busy ? "Saving…" : m.id ? "Save changes" : "Save trade"}</button>
+        ${m.id ? `<button type="button" class="pill" data-act="sibling" data-k="sibling">Another account</button><button type="button" class="pill danger${m.delArmed ? " armed" : ""}" data-act="delete" data-k="delete">${m.delArmed ? "Tap again to delete" : "Delete"}</button>` : ""}
+        <button type="button" class="pill ghost" data-act="close" data-k="cancel">Cancel</button></div>
+    </div>`;
+  }
+  function openSheet(k) { hideTip(); S.sheet = k; renderModal(true); }
+  function closeSheet() { S.sheet = null; renderModal(); }
+  const GUIDE = [
+    ["Log it once it's closed", "Tap “Log a trade” after each trade finishes. One entry per account."],
+    ["Setup and A+", "Pick the tag the indicator put on the chart: Close, Tap back, 2nd close or OB. Tick A+ when the tag was blue."],
+    ["Time and night", "Type the NY time from the tag (hover it in TradingView), like 20:35. The night is the NY evening: tonight, last night or another date."],
+    ["The indicator's trade", "Copy the entry, stop and target exactly as the indicator drew them; the tag's hover box and the alert both show them. Then pick how it ended. If it ran to the end of the hour, pick Hour's end and add the exit price. The points fill in."],
+    ["What you did", "“As the indicator showed” when you used its stop, its target and your normal size. “Changed something” when you moved or cut the stop, changed the target or the size, or closed early: tick what changed and add your P&L in points per contract. “Didn't take it” for a signal you missed: still log how it ended, so the plan's numbers stay complete."],
+    ["Size and account", "Pick GC or MGC, the contracts and the account. The risk line checks it against your max risk."],
+    ["Same trade, another account", "Save it, open it from Trades, tap “Another account”, then add that account's size and result. The plan counts the trade once."],
+    ["Notes and chart", "Write what you saw and how you felt, and paste a chart screenshot with ⌘V."],
+  ];
+  function guideSheet(fresh) {
+    return `<div class="sheet${fresh ? " pop" : ""}" role="dialog" aria-modal="true" aria-labelledby="gh">
+      <div class="m-top"><div><h2 id="gh">How to log a trade</h2><p class="m-sub">The same steps every time keep the numbers honest.</p></div><button type="button" class="round sm" data-act="close" data-k="close" aria-label="Close">${ICON.x}</button></div>
+      <ol class="guide">${GUIDE.map(([h, t]) => `<li><b>${esc(h)}</b><span>${esc(t)}</span></li>`).join("")}</ol>
+      <p class="m-help">Once a week, look at the block of 20 and the Edge page. Judge the plan on blocks of trades, not on the last one.</p>
+      <div class="m-actions" style="margin-top:14px">${S.db && S.writable ? '<button type="button" class="pill dark" data-act="guide-log" data-k="guide-log">Log a trade</button>' : ""}<button type="button" class="pill ghost" data-act="close" data-k="cancel">Close</button></div>
+    </div>`;
+  }
+  function syncSheet(fresh) {
+    const d = S.syncDraft || (S.syncDraft = syncCfg()), c = syncCfg();
+    return `<div class="sheet${fresh ? " pop" : ""}" role="dialog" aria-modal="true" aria-labelledby="sh">
+      <div class="m-top"><div><h2 id="sh">Sync and backup</h2><p class="m-sub" id="syncStatus">${esc(syncStatusText())}</p></div><button type="button" class="round sm" data-act="close" data-k="close" aria-label="Close">${ICON.x}</button></div>
+      <section class="m-sec"><div class="m-lbl">Sync through a secret GitHub gist</div>
+        <label class="fl">GitHub token<input class="in" type="password" data-sync="token" data-k="sync:token" autocomplete="off" spellcheck="false" placeholder="github_pat_…" value="${esc(d.token)}"></label>
+        <label class="fl">Gist ID<input class="in" data-sync="gist" data-k="sync:gist" autocomplete="off" spellcheck="false" placeholder="Leave blank the first time; the app makes one" value="${esc(d.gist)}"></label>
+        <ol class="steps"><li>On github.com: your photo › Settings › Developer settings › Personal access tokens › Fine-grained tokens › Generate new token.</li>
+          <li>Name it Keystone Journal and pick an expiry. Under Account permissions, set Gists to Read and write. Nothing else.</li>
+          <li>Generate it, copy it, paste it above and tap Turn on sync. The app makes a secret gist and fills in its ID.</li>
+          <li>On your other devices, paste the same token and gist ID.</li></ol>
+        <p class="hint">The token stays in this browser only. A secret gist is unlisted: only someone with its link can open it.${c.gist ? " To let Claude read your trades, send it the gist link." : ""}</p>
+        <div class="m-actions"><button type="button" class="pill dark" data-act="sync-save" data-k="sync-save"${L.sync.busy ? " disabled" : ""}>${c.token ? "Save and sync now" : "Turn on sync"}</button>
+          ${c.gist ? '<button type="button" class="pill" data-act="sync-copy" data-k="sync-copy">Copy the gist link</button>' : ""}
+          ${c.token ? '<button type="button" class="pill ghost" data-act="sync-off" data-k="sync-off">Stop syncing here</button>' : ""}</div></section>
+      <section class="m-sec"><div class="m-lbl">Backup</div>
+        <div class="m-actions"><button type="button" class="pill" data-act="backup" data-k="backup">${ICON.download}Download a backup</button><button type="button" class="pill" data-act="import" data-k="import">Import a backup or CSV</button></div>
+        <input type="file" id="importFile" accept=".json,.csv,application/json,text/csv" hidden>
+        <p class="hint">Import takes a backup from this journal, or the CSV export from the claude.ai journal. Trades already here are kept. Screenshots stay on the device they were added on.</p></section>
+    </div>`;
+  }
+  function syncSave() {
+    const d = S.syncDraft || {};
+    if (!d.token) { toast("Paste the GitHub token first."); return; }
+    store.set("kj-sync", { token: d.token, gist: d.gist || "" });
+    setSync("pending", "");
+    renderModal();
+    syncNow();
+  }
+  function renderModal(fresh) {
+    const m = S.modal;
+    if (!m && S.sheet) {
+      const ae = document.activeElement;
+      const fk = ae && modalRoot.contains(ae) ? ae.getAttribute("data-k") : null;
+      modalRoot.innerHTML = `<div class="scrim">${S.sheet === "sync" ? syncSheet(fresh) : guideSheet(fresh)}</div>`;
+      document.documentElement.classList.add("modal-open");
+      const el = modalRoot.querySelector(`[data-k="${cssq(fk || "close")}"]`);
+      if (el && (fk || fresh)) el.focus({ preventScroll: true });
+      return;
+    }
+    if (!m) { modalRoot.innerHTML = ""; document.documentElement.classList.remove("modal-open"); return; }
+    const old = modalRoot.querySelector(".sheet");
+    const scroll = old && !fresh ? old.scrollTop : 0;
+    const ae = document.activeElement;
+    const fk = ae && modalRoot.contains(ae) ? ae.getAttribute("data-k") : null;
+    modalRoot.innerHTML = `<div class="scrim">${sheetHtml(m, fresh)}</div>`;
+    document.documentElement.classList.add("modal-open");
+    const sheet = modalRoot.querySelector(".sheet");
+    sheet.scrollTop = scroll;
+    const want = m.focus || fk;
+    m.focus = null;
+    const el = want ? modalRoot.querySelector(`[data-k="${cssq(want)}"]`) : null;
+    if (el) el.focus({ preventScroll: !m.acct.open });
+    else if (fresh) { const c = modalRoot.querySelector('[data-k="close"]'); if (c) c.focus({ preventScroll: true }); }
+    patchCalc();
+  }
+  function modalErr(msg) { const m = S.modal; if (!m) return; m.err = msg; const el = modalRoot.querySelector(".m-err"); if (el) el.textContent = msg; }
+  function patchCalc() {
+    const m = S.modal;
+    if (!m) return;
+    const f = m.f;
+    const lv = { dir: f.dir, outcome: f.outcome, entry: numOf(f.entry), stop: numOf(f.stop), target: numOf(f.target), exit: numOf(f.exit) };
+    for (const k of ["entry", "stop", "target", "exit"]) if (Number.isNaN(lv[k])) lv[k] = null;
+    const auto = autoPnl(lv), typed = numOf(f.pnl);
+    const pin = modalRoot.querySelector('[data-f="pnl"]');
+    if (pin) pin.placeholder = auto == null ? "auto" : fPts(auto);
+    const calc = modalRoot.querySelector("#calcLine");
+    if (calc) {
+      const bits = [];
+      const pts = isNum(typed) ? typed : auto;
+      if (isNum(pts)) bits.push(`<span><b>${fPts(pts)} pts</b> ${isNum(typed) ? "typed" : "from the levels"}</span>`);
+      if (isNum(lv.entry) && isNum(lv.stop)) bits.push(`<span>stop ${Math.abs(lv.entry - lv.stop).toFixed(1)} pts</span>`);
+      if (isNum(lv.entry) && isNum(lv.target)) bits.push(`<span>target ${Math.abs(lv.target - lv.entry).toFixed(1)} pts</span>`);
+      calc.innerHTML = bits.length ? bits.join("") : "<span>The points fill in from the levels and how it ended.</span>";
+    }
+    const risk = modalRoot.querySelector("#riskLine");
+    if (risk) {
+      const my = numOf(f.myStop);
+      const st = f.exec === "changed" && f.changes.includes("stop") && isNum(my) && my > 0 ? my : isNum(lv.entry) && isNum(lv.stop) ? Math.abs(lv.entry - lv.stop) : null;
+      const q = numOf(f.qty), max = S.maxRisk, mult = MULT[f.instrument] || 100;
+      let html = "";
+      if (st) {
+        if (isNum(q) && q > 0) {
+          const r = st * q * mult, over = r - max;
+          html += `<span class="chip ${over > 0.5 ? "late" : "ok"}"><i></i>Risk ${usd(r)} on ${q} ${esc(f.instrument)}</span><span>${over > 0.5 ? `${usd(over)} over your ${usd(max)} max` : `inside your ${usd(max)} max`}</span>`;
+        }
+        const fits = (s) => `${Math.floor((max + 1e-9) / (s * 100))} GC or ${Math.floor((max + 1e-9) / (s * 10))} MGC`;
+        html += `<span>A ${st.toFixed(1)} pt stop fits ${fits(st)} inside ${usd(max)}</span>`;
+        const ind = isNum(lv.entry) && isNum(lv.stop) ? Math.abs(lv.entry - lv.stop) : null;
+        if (ind && Math.abs(ind - st) > 0.05) html += `<span>The indicator's ${ind.toFixed(1)} pt stop fits ${fits(ind)}: keep its stop and size to it</span>`;
+      } else html = `<span>Add the entry and stop to check the risk against your ${usd(max)} max.</span>`;
+      risk.innerHTML = html;
+    }
+    const hint = modalRoot.querySelector("#hobHint");
+    if (hint) {
+      const tm = normTime(f.time), at = tm ? nyInstant(f.date, tm) : null;
+      hint.textContent = at != null ? `That's ${fDay(at, HOB)} · ${fTime(at, HOB)} in Hobart` : "NY time from the indicator, like 20:35";
+    }
+  }
+  function takeShot(file) {
+    const m = S.modal;
+    if (!m || !S.assets) return;
+    if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) { modalErr("That file isn't a PNG, JPEG, WebP or GIF image."); return; }
+    if (file.size > 20 * 1024 * 1024) { modalErr("That image is over 20 MB. Try a smaller screenshot."); return; }
+    if (m.shot.url) URL.revokeObjectURL(m.shot.url);
+    m.shot = { blob: file, url: URL.createObjectURL(file), remove: false };
+    m.dirty = true; m.err = "";
+    renderModal();
+  }
+  const errMsg = (err) => {
+    const code = err && err.code;
+    return code === "quota_exceeded" ? "The journal is full. Delete old screenshots or trades and try again."
+      : code === "too_large" ? "That screenshot is too large. Try a smaller one."
+      : code === "not_granted" || code === "permission_denied" ? "This journal is read-only for you."
+      : "Couldn't save just now. Check your connection and press Save again.";
+  };
+  const plain = (t) => { const o = { ...t }; delete o.id; return o; };
+  const same = (a, b) => (a == null ? null : a) === (b == null ? null : b);
+
+  async function save() {
+    const m = S.modal;
+    if (!m || m.busy) return;
+    if (!S.db || !S.writable) return modalErr("This view can't save. Open the journal on claude.ai while signed in.");
+    const f = m.f;
+    if (!f.setup) return modalErr("Pick the setup.");
+    if (!f.dir) return modalErr("Pick long or short.");
+    if (!validDate(f.date)) return modalErr("Pick the NY session date.");
+    const time = normTime(f.time);
+    if (time === null) return modalErr("Time is NY time as HH:MM, like 20:35.");
+    if (!f.outcome) return modalErr("Pick how the indicator's trade ended.");
+    const n = {};
+    for (const k of Object.keys(FIELD_LABEL)) { n[k] = numOf(f[k]); if (Number.isNaN(n[k])) return modalErr(`${FIELD_LABEL[k]} has to be a number.`); }
+    const changed = f.exec === "changed";
+    if (changed && n.myPnl == null) return modalErr("Add your P&L on the trade you changed, in points per contract (like −5.3).");
+    const sig = { setup: f.setup, aplus: !!f.aplus && GAP.includes(f.setup), dir: f.dir, date: f.date, time, entry: n.entry, stop: n.stop, target: n.target, outcome: f.outcome, exit: f.outcome === "time" ? n.exit : null };
+    sig.pnl = n.pnl != null ? n.pnl : autoPnl(sig);
+    const missed = f.exec === "missed";
+    const doc = { ...sig, taken: !missed, exec: f.exec, changes: changed ? f.changes.slice() : [], myStop: changed && f.changes.includes("stop") ? n.myStop : null, myPnl: changed ? n.myPnl : null,
+      instrument: f.instrument, qty: missed ? null : n.qty, account: missed ? "" : f.account.trim(), mfe: n.mfe, mae: n.mae, notes: f.notes.trim() };
+    m.busy = true; m.err = ""; renderModal();
+    const now = new Date().toISOString();
+    const prev = m.id ? S.trades.find((t) => t.id === m.id) : null;
+    const col = S.db.collection("trades");
+    const ref = m.id ? col.doc(m.id) : col.doc();
+    let upId = null;
+    try {
+      if (m.shot.blob && S.assets) { const up = await S.assets.upload(m.shot.blob, { type: m.shot.blob.type }); upId = up.id; }
+      const oldShot = prev ? prev.shot || null : null;
+      doc.shot = upId || (m.shot.remove ? null : oldShot);
+      doc.sig = m.sig || ref.id;
+      doc.createdAt = prev && prev.createdAt ? prev.createdAt : now;
+      doc.updatedAt = now;
+      await ref.set(doc);
+      // keep this trade's other accounts in step with the indicator's details
+      const touched = [];
+      for (const t of S.trades.filter((x) => x.id !== ref.id && sigKey(x) === doc.sig)) {
+        const diff = {};
+        for (const k of SIGNAL_FIELDS) if (!same(t[k], doc[k])) diff[k] = doc[k];
+        if (Object.keys(diff).length) { const before = plain(t); await col.doc(t.id).update({ ...diff, updatedAt: now }); touched.push([t.id, before]); }
+      }
+      if (!missed) store.set("kj-last", { instrument: doc.instrument, qty: doc.qty, account: doc.account });
+      const prevDoc = prev ? plain(prev) : null;
+      const replaced = oldShot && oldShot !== doc.shot ? oldShot : null;
+      m.busy = false;
+      closeModal(true);
+      toast(prev ? "Changes saved" : "Trade saved", async () => {
+        if (prevDoc) await ref.set(prevDoc); else await ref.delete();
+        for (const [id, before] of touched) await col.doc(id).set(before);
+        if (upId && S.assets) { try { await S.assets.delete(upId); } catch (e) {} }
+      }, () => { if (replaced && S.assets) S.assets.delete(replaced).catch(() => {}); });
+    } catch (err) {
+      if (upId && S.assets) S.assets.delete(upId).catch(() => {});
+      m.busy = false; m.err = errMsg(err);
+      renderModal();
+    }
+  }
+  async function del() {
+    const m = S.modal;
+    if (!m || !m.id || m.busy) return;
+    if (!S.db || !S.writable) return modalErr("This journal is read-only here.");
+    if (!m.delArmed) {
+      m.delArmed = true; m.focus = "delete"; renderModal();
+      clearTimeout(m.delT);
+      m.delT = setTimeout(() => { if (S.modal === m && m.delArmed) { m.delArmed = false; m.focus = "delete"; renderModal(); } }, 5000);
+      return;
+    }
+    const prev = S.trades.find((t) => t.id === m.id);
+    if (!prev) { closeModal(true); return; }
+    const ref = S.db.collection("trades").doc(m.id), before = plain(prev);
+    try {
+      m.busy = true;
+      await ref.delete();
+      closeModal(true);
+      toast("Trade deleted", async () => { await ref.set(before); }, () => { if (before.shot && S.assets) S.assets.delete(before.shot).catch(() => {}); });
+    } catch (err) { m.busy = false; m.delArmed = false; m.err = "Couldn't delete just now. Try again."; renderModal(); }
+  }
+
+  // ---------- events ----------
+  document.addEventListener("click", (e) => {
+    if (e.target.classList && e.target.classList.contains("scrim")) { if (S.modal) closeModal(false); else closeSheet(); return; }
+    if (e.target === viewer || e.target.id === "viewerImg") { viewer.hidden = true; return; }
+    const el = e.target.closest && e.target.closest("[data-act]");
+    if (!el) return;
+    const act = el.getAttribute("data-act"), v = el.getAttribute("data-v"), m = S.modal;
+    switch (act) {
+      case "nav": go(v); break;
+      case "theme": { const next = currentTheme() === "dark" ? "light" : "dark"; document.documentElement.setAttribute("data-theme", next); store.set("kj-theme", next); render(); if (S.modal) renderModal(); break; }
+      case "sync": if (APP) { S.syncDraft = syncCfg(); openSheet("sync"); } else resync(); break;
+      case "new": if (S.db && S.writable) { S.sheet = null; openModal(); } break;
+      case "guide": openSheet("guide"); break;
+      case "month-nav": {
+        const now = eveningDate(), n = Number(v);
+        let y = S.cal ? S.cal.y : Number(now.slice(0, 4)), mo = S.cal ? S.cal.mo : Number(now.slice(5, 7)) - 1;
+        if (n === 0) { y = Number(now.slice(0, 4)); mo = Number(now.slice(5, 7)) - 1; }
+        else { mo += n; if (mo < 0) { mo = 11; y--; } if (mo > 11) { mo = 0; y++; } }
+        S.cal = { y, mo, day: null };
+        render();
+        break;
+      }
+      case "month-day": if (S.cal) { S.cal.day = v; render(); } break;
+      case "guide-log": S.sheet = null; if (S.db && S.writable) openModal(); else renderModal(); break;
+      case "form-help": if (m) { m.help = !m.help; m.focus = "form-help"; renderModal(); } break;
+      case "sync-save": syncSave(); break;
+      case "sync-off": store.set("kj-sync", null); S.syncDraft = { token: "", gist: "" }; setSync("off", ""); renderModal(); toast("Sync is off on this device. Your trades stay here."); break;
+      case "sync-copy": { const g = syncCfg().gist; const done = () => toast("Gist link copied"); try { navigator.clipboard.writeText("https://gist.github.com/" + g).then(done, () => toast("Couldn't copy it. The ID is in the box.")); } catch (err) { toast("Couldn't copy it. The ID is in the box."); } break; }
+      case "backup": downloadBackup(); break;
+      case "import": { const fi = $("#importFile"); if (fi) fi.click(); break; }
+      case "edit": openModal(el.getAttribute("data-id")); break;
+      case "filter": S.filter = v; render(); break;
+      case "missed": S.countMissed = !S.countMissed; store.set("kj-missed", S.countMissed); render(); break;
+      case "export": exportCsv(); break;
+      case "shot": { e.stopPropagation(); const vi = $("#viewerImg"); vi.setAttribute("data-asset", v); vi.src = assetSrc(v); viewer.hidden = false; break; }
+      case "undo": runUndo(); break;
+      case "close": if (S.modal) closeModal(false); else closeSheet(); break;
+      case "set": if (m) { const k = el.getAttribute("data-fld"); m.f[k] = v; if (k === "setup" && !GAP.includes(v)) m.f.aplus = false; m.dirty = true; m.err = ""; renderModal(); } break;
+      case "aplus": if (m) { m.f.aplus = !m.f.aplus; m.dirty = true; renderModal(); } break;
+      case "chg": if (m) { const i = m.f.changes.indexOf(v); if (i >= 0) m.f.changes.splice(i, 1); else m.f.changes.push(v); m.dirty = true; renderModal(); } break;
+      case "cal": if (m) { m.cal.open = !m.cal.open; if (m.cal.open) { const ds = validDate(m.f.date) ? m.f.date : lastSession(); m.cal.y = Number(ds.slice(0, 4)); m.cal.mo = Number(ds.slice(5, 7)) - 1; } renderModal(); } break;
+      case "cal-nav": if (m) { m.cal.mo += Number(v); if (m.cal.mo < 0) { m.cal.mo = 11; m.cal.y--; } if (m.cal.mo > 11) { m.cal.mo = 0; m.cal.y++; } renderModal(); } break;
+      case "cal-pick": if (m) { m.f.date = v; m.cal.open = false; m.dirty = true; m.focus = "cal"; renderModal(); } break;
+      case "acct-open": if (m) { m.acct = { open: true, q: "" }; m.focus = "acct-q"; renderModal(); } break;
+      case "acct-pick": if (m) { m.f.account = v || ""; m.acct.open = false; m.dirty = true; m.focus = "acct-btn"; renderModal(); } break;
+      case "acct-add": if (m) { m.f.account = m.acct.q.trim(); m.acct.open = false; m.dirty = true; m.focus = "acct-btn"; renderModal(); } break;
+      case "shot-pick": { const fi = $("#shotFile"); if (fi) fi.click(); break; }
+      case "shot-remove": if (m) { if (m.shot.url) URL.revokeObjectURL(m.shot.url); m.shot = { blob: null, url: null, remove: true }; m.dirty = true; renderModal(); } break;
+      case "more": if (m) { m.more = !m.more; m.focus = "more"; renderModal(); } break;
+      case "save": save(); break;
+      case "delete": del(); break;
+      case "sibling": if (m) {
+        if (m.dirty) { m.err = "Save your changes first, then add the other account."; renderModal(); break; }
+        const t = S.trades.find((x) => x.id === m.id);
+        if (t) { S.modal = null; openModal(null, { from: t }); }
+        break;
+      }
+    }
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (!viewer.hidden) { viewer.hidden = true; return; }
+      const m = S.modal;
+      if (!m && S.sheet) { e.preventDefault(); closeSheet(); return; }
+      if (m) {
+        e.preventDefault();
+        if (m.acct.open) { m.acct.open = false; m.focus = "acct-btn"; renderModal(); }
+        else if (m.cal.open) { m.cal.open = false; m.focus = "cal"; renderModal(); }
+        else closeModal(false);
+        return;
+      }
+      hideTip();
+      return;
+    }
+    const t = e.target;
+    if ((e.key === "Enter" || e.key === " ") && t && t.matches && t.matches('[role="button"][data-act]')) { e.preventDefault(); t.click(); return; }
+    if (e.key === "Enter" && t && t.hasAttribute && t.hasAttribute("data-acct-q")) { e.preventDefault(); const first = $("#plRows .pl-row"); if (first) first.click(); }
+  });
+  modalRoot.addEventListener("input", (e) => {
+    const m = S.modal, el = e.target;
+    if (el.hasAttribute("data-sync")) { S.syncDraft = S.syncDraft || syncCfg(); S.syncDraft[el.getAttribute("data-sync")] = el.value.trim(); return; }
+    if (!m) return;
+    if (el.hasAttribute("data-f")) { m.f[el.getAttribute("data-f")] = el.value; m.dirty = true; patchCalc(); return; }
+    if (el.hasAttribute("data-acct-q")) { m.acct.q = el.value; const r = $("#plRows"); if (r) r.innerHTML = acctRows(m); return; }
+    if (el.hasAttribute("data-maxrisk")) { const v = numOf(el.value); if (isNum(v) && v > 0) { S.maxRisk = v; store.set("kj-maxrisk", v); } patchCalc(); }
+  });
+  modalRoot.addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (e.target.id === "shotFile") takeShot(f);
+    if (e.target.id === "importFile") { importFile(f); e.target.value = ""; }
+  });
+  app.addEventListener("input", (e) => {
+    const k = e.target.getAttribute && e.target.getAttribute("data-size");
+    if (!k) return;
+    if (k === "stop") S.size.stop = e.target.value;
+    else { const v = numOf(e.target.value); if (isNum(v) && v > 0) { S.maxRisk = v; store.set("kj-maxrisk", v); } }
+    const out = $("#sizeOut");
+    if (out) out.innerHTML = sizeOut();
+  });
+  document.addEventListener("paste", (e) => {
+    const m = S.modal;
+    if (!m || !S.assets) return;
+    const items = e.clipboardData ? [...e.clipboardData.items] : [];
+    const it = items.find((i) => i.kind === "file" && i.type.startsWith("image/"));
+    if (!it) return;
+    const a = document.activeElement;
+    const typing = a && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && a.type !== "file"));
+    if (typing && a.getAttribute("data-k") !== "shot") return;
+    e.preventDefault();
+    takeShot(it.getAsFile());
+  });
+  let rsz;
+  window.addEventListener("resize", () => { clearTimeout(rsz); rsz = setTimeout(() => { if (S.lastD) drawEquity(S.lastD); }, 150); });
+  try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { if (!document.documentElement.getAttribute("data-theme")) render(); }); } catch (e) {}
+  setInterval(updateClock, 20000);
+
+  async function exportCsv() {
+    if (!S.downloads) return;
+    const cols = ["date", "time", "setup", "aplus", "dir", "taken", "exec", "changes", "entry", "stop", "target", "outcome", "exit", "pnl", "myStop", "myPnl", "instrument", "qty", "account", "mfe", "mae", "notes", "sig", "id", "createdAt", "updatedAt"];
+    const cell = (v) => { const s = v == null ? "" : Array.isArray(v) ? v.join(" ") : String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const rows = S.trades.slice().sort(order).map((t) => cols.map((c) => cell(c === "sig" ? sigKey(t) : t[c])).join(","));
+    try { await S.downloads.save({ filename: "keystone-journal.csv", data: [cols.join(","), ...rows].join("\n") }); }
+    catch (err) { if (!err || err.code !== "declined") toast("Couldn't export the CSV here."); }
+  }
+
+  // ---------- start ----------
+  function banner(msg) { const b = $("#banner"); b.textContent = msg || ""; b.hidden = !msg; }
+  function subscribe() {
+    S.unsub.forEach((u) => { try { u(); } catch (e) {} });
+    S.unsub = [];
+    S.live = APP ? syncLive() : "connecting";
+    render();
+    S.unsub.push(S.db.collection("trades").onSnapshot((snap) => {
+      S.trades = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      S.loaded = true; S.live = APP ? syncLive() : "live";
+      render();
+    }, () => { S.loaded = true; S.live = "offline"; render(); }));
+    S.unsub.push(S.db.doc("config/backtest").onSnapshot((snap) => { S.backtest = snap.exists ? snap.data() : null; render(); }, () => {}));
+  }
+  function resync() {
+    if (!S.db) { toast("Open the journal on claude.ai while signed in to sync it."); return; }
+    if (S.live === "live") { toast("Your journal is up to date"); return; }
+    subscribe();
+  }
+  const saved = store.get("kj-theme", null);
+  if (saved === "dark" || saved === "light") document.documentElement.setAttribute("data-theme", saved);
+  S.route = routeOf(location.hash);
+  S.riseUntil = Date.now() + 1400;
+  render();
+  if (APP) {
+    L.st = localLoad();
+    L.sync.state = syncCfg().token ? "pending" : "off";
+    let ok = true;
+    try { localStorage.setItem("kj-probe", "1"); localStorage.removeItem("kj-probe"); } catch (e) { ok = false; }
+    if (!ok) banner("This browser won't let the journal save (private browsing or storage turned off). Trades you add will be lost when you close it.");
+    if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+  (async () => {
+    const use = APP ? localUse : window.claude && typeof window.claude.use === "function" ? (n) => window.claude.use(n) : async () => null;
+    let db = null;
+    try { db = await use("db"); } catch (e) {}
+    if (!db) {
+      S.loaded = true; S.live = "local"; S.writable = false;
+      banner("Journal storage isn't available in this view. Open the journal on claude.ai while signed in to log and see your trades.");
+      render();
+      return;
+    }
+    S.db = db;
+    let user = null;
+    try { user = await use("user"); } catch (e) {}
+    let canWrite = null;
+    if (user) { try { canWrite = await user.can("data.write"); } catch (e) {} }
+    if (canWrite === false) { S.writable = false; banner("You can read this journal but not change it."); }
+    if (S.writable) { try { S.assets = await use("assets"); } catch (e) {} }
+    try { S.downloads = await use("downloads"); } catch (e) {}
+    subscribe();
+    if (APP && syncCfg().token) syncNow();
+  })();
+})();
+</script>
+</body>
+</html>
